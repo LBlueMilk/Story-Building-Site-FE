@@ -1,0 +1,22 @@
+# Node modules
+node_modules/
+.next/
+.vscode/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+out/
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Misc
+.DS_Store
+*.log
