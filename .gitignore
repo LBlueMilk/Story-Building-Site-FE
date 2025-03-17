@@ -7,16 +7,22 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.log
 
 # Build output
 out/
 dist/
 
-# Environment
+# Environment variables
 .env
 .env.local
 .env.*.local
 
-# Misc
+# System files
 .DS_Store
-*.log
+Thumbs.db
+desktop.ini
+
+# IDE settings
+.idea/
+*.iml
