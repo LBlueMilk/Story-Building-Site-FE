@@ -1,10 +1,13 @@
-const Footer = () => {
-    return (
-      <footer className="text-center p-4 mt-10 border-t">
-        <p>底部 <a href="/register" className="text-blue-500 underline">立即註冊</a></p>
-      </footer>
-    );
-  };
-  
-  export default Footer;
-  
+'use client';
+
+import { Card, CardContent } from "@/components/ui/card";
+
+export default function Footer() {
+  return (
+    <footer className="w-full bg-gray-100 text-center py-4">
+      <p className="text-sm text-gray-500">
+        Story Building Site © 2025 | 立即註冊，開啟你的創作之旅
+      </p>
+    </footer>
+  );
+}

@@ -65,7 +65,7 @@ export default function EmailDialog({ open, setOpen }: EmailDialogProps) {
             required
           />
           <Textarea
-            placeholder="您的訊息"
+            placeholder="有什麼問題呢?"
             rows={4}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
