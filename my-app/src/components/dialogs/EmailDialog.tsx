@@ -46,9 +46,9 @@ export default function EmailDialog({ open, setOpen }: EmailDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent>
+      <DialogContent className="bg-white dark:bg-neutral-900 text-black dark:text-white">
         <DialogHeader>
-          <DialogTitle>聯絡我們</DialogTitle>
+        <DialogTitle className="text-center text-lg font-bold">聯絡我們</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
           <Input

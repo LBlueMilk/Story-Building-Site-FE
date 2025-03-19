@@ -2,8 +2,8 @@
 
 import { useState, Dispatch, SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../app/context/AuthContext';
-import { login } from '../app/services/auth';
+import { useAuth } from '../../app/context/AuthContext';
+import { login } from '../../app/services/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
@@ -17,17 +17,18 @@ export default function LoginDialog({ open, setOpen, openRegister }: LoginDialog
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const router = useRouter();
-    const { setToken } = useAuth();
+    const { setToken, setUser } = useAuth();
 
     const handleLogin = async () => {
         try {
             const response = await login({ email, password });
-            const { accessToken } = response.data;
+            const { accessToken, user } = response.data;
             setToken(accessToken);
+            setUser(user);
             setOpen(false);
             router.push('/');
         } catch (err) {
-            // 已經透過 Interceptor 統一處理錯誤
+            // 錯誤透過 Interceptor 已處理
         }
     };
 
@@ -45,7 +46,6 @@ export default function LoginDialog({ open, setOpen, openRegister }: LoginDialog
                         onChange={(e) => setEmail(e.target.value)}
                         className="m-2 w-full"
                     />
-
                     <input
                         className="border p-2 m-2 w-full"
                         type="password"

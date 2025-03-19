@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import EmailDialog from '@/components/EmailDialog'; // 確認路徑
+import EmailDialog from '@/components/dialogs/EmailDialog'; // 確認路徑
 import { Button } from '@/components/ui/button';
 
 export default function AnnouncementPage() {

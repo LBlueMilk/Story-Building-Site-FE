@@ -2,8 +2,9 @@
 
 import { useState, Dispatch, SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
-import { register } from '../app/services/auth';
+import { register } from '../../app/services/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useAuth } from '../../app/context/AuthContext';
 
 interface RegisterDialogProps {
     open: boolean;
@@ -14,16 +15,20 @@ interface RegisterDialogProps {
 export default function RegisterDialog({ open, setOpen, openLogin }: RegisterDialogProps) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
     const router = useRouter();
+    const { setToken, setUser } = useAuth();
 
     const handleRegister = async () => {
         try {
-            await register({ email, password });
+            const response = await register({ email, password, name });
+            const { accessToken, user } = response.data;
+            setToken(accessToken);
+            setUser(user);
             setOpen(false);
-            router.push('/login');
-            openLogin();
+            router.push('/');
         } catch (err) {
-
+            // 錯誤透過 Interceptor 已處理
         }
     };
 
@@ -36,6 +41,13 @@ export default function RegisterDialog({ open, setOpen, openLogin }: RegisterDia
                 <div className="flex flex-col items-center">
                     <input
                         className="border p-2 m-2 w-full"
+                        type="text"
+                        placeholder="名稱"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                    />
+                    <input
+                        className="border p-2 m-2 w-full"
                         type="email"
                         placeholder="Email"
                         value={email}
@@ -44,7 +56,7 @@ export default function RegisterDialog({ open, setOpen, openLogin }: RegisterDia
                     <input
                         className="border p-2 m-2 w-full"
                         type="password"
-                        placeholder="Password"
+                        placeholder="密碼"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />

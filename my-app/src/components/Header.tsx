@@ -5,18 +5,21 @@ import { useState } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import LoginDialog from '@/components/LoginDialog';
-import RegisterDialog from '@/components/RegisterDialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import LoginDialog from '@/components/dialogs/LoginDialog';
+import RegisterDialog from '@/components/dialogs/RegisterDialog';
 import Image from 'next/image';
 import AnnouncementButton from "@/components/AnnouncementButton";
+import { useTheme } from '@/app/context/ThemeContext';
+import CreateStoryDialog from '@/components/dialogs/CreateStoryDialog';
 
 export default function Header() {
-  const { token, logout } = useAuth();
+  const { token, user, logout } = useAuth();
   const router = useRouter();
-  // 控制登入註冊 Dialog 狀態
   const [openLogin, setOpenLogin] = useState(false);
   const [openRegister, setOpenRegister] = useState(false);
+  const { theme, toggleTheme } = useTheme();
+  const [openCreate, setOpenCreate] = useState(false);
 
   const handleOpenRegister = () => {
     setOpenLogin(false);
@@ -28,48 +31,76 @@ export default function Header() {
     setOpenLogin(true);
   };
 
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
+
   return (
-    <header className="flex justify-between items-center px-6 py-4 border-b shadow-sm bg-white">
-      <div className="flex items-center space-x-6">
+    <nav className="flex justify-between items-center px-4 py-2 border-b shadow-sm bg-white dark:bg-gray-950">
+      <div className="flex items-center gap-4">
         <Link href="/">
-          <Image src="/logo.png" alt="網站LOGO" width={50} height={50} />
+          <Image src="/logo.png" alt="網站LOGO" width={40} height={40} priority />
         </Link>
+        <Button variant="outline" onClick={toggleTheme} className="h-8 px-3">
+          {theme === 'light' ? '🌞' : '🌙'}
+        </Button>
         <AnnouncementButton />
       </div>
 
-      {/* 依登入狀態判斷 */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center gap-3">
         {!token ? (
-          <>
-            <Button variant="default" onClick={() => setOpenLogin(true)}>
-              登入
-            </Button>
-          </>
+          <Button variant="default" onClick={() => setOpenLogin(true)} className="h-8 px-3">
+            登入
+          </Button>
         ) : (
-          // 已登入時可替換為用戶選單，暫留占位
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="secondary">帳戶</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => router.push('/profile')}>個人資料</DropdownMenuItem>
-              <DropdownMenuItem onClick={logout}>登出</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <>
+            <CreateStoryDialog />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="secondary" className="px-3 h-8">
+                  歡迎 {user?.name || ' '}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[12rem] bg-white dark:bg-gray-900 rounded-md shadow-md text-center">
+                <DropdownMenuItem
+                  onClick={() => router.push('/profile')}
+                  className="w-full justify-center text-center truncate hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-md"
+                >
+                  個人資料
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator className="my-1 mx-2" />
+
+                {user?.stories && user.stories.length > 0 ? (
+                  user.stories.map((story) => (
+                    <DropdownMenuItem
+                      key={story.id}
+                      onClick={() => router.push(`/story/${story.id}`)}
+                      className="w-full justify-center text-center truncate hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-md"
+                    >
+                      {story.title}
+                    </DropdownMenuItem>
+                  ))
+                ) : null}
+
+                <DropdownMenuSeparator className="my-1 mx-2" />
+
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="w-full justify-center text-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-md"
+                >
+                  登出
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
         )}
       </div>
 
-      {/* Dialog 部分 */}
-      <LoginDialog
-        open={openLogin}
-        setOpen={setOpenLogin}
-        openRegister={handleOpenRegister}
-      />
-      <RegisterDialog
-        open={openRegister}
-        setOpen={setOpenRegister}
-        openLogin={handleOpenLogin}
-      />
-    </header>
+      <LoginDialog open={openLogin} setOpen={setOpenLogin} openRegister={handleOpenRegister} />
+      <RegisterDialog open={openRegister} setOpen={setOpenRegister} openLogin={handleOpenLogin} />
+    </nav>
   );
 }
