@@ -22,7 +22,12 @@ export default function RegisterDialog({ open, setOpen, openLogin }: RegisterDia
     const handleRegister = async () => {
         try {
             const response = await register({ email, password, name });
-            const { accessToken, user } = response.data;
+            const { accessToken, refreshToken, user } = response.data;
+    
+            // 儲存 Token
+            localStorage.setItem('accessToken', accessToken);
+            localStorage.setItem('refreshToken', refreshToken);
+    
             setToken(accessToken);
             setUser(user);
             setOpen(false);
@@ -31,6 +36,7 @@ export default function RegisterDialog({ open, setOpen, openLogin }: RegisterDia
             // 錯誤透過 Interceptor 已處理
         }
     };
+    
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>

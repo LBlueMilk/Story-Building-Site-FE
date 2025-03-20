@@ -20,15 +20,29 @@ export default function LoginDialog({ open, setOpen, openRegister }: LoginDialog
     const { setToken, setUser } = useAuth();
 
     const handleLogin = async () => {
+        if (email.trim() === '' || password.trim() === '') {
+            alert('Email 和密碼為必填！');
+            return;
+        }
+
         try {
-            const response = await login({ email, password });
-            const { accessToken, user } = response.data;
+            const response = await login({
+                email: email.trim().toLowerCase(),
+                password: password
+            });
+
+            const { accessToken, refreshToken, user } = response.data;
+
+            localStorage.setItem('accessToken', accessToken);
+            localStorage.setItem('refreshToken', refreshToken);
+
             setToken(accessToken);
             setUser(user);
+
             setOpen(false);
             router.push('/');
         } catch (err) {
-            // 錯誤透過 Interceptor 已處理
+            // 交由 Interceptor 處理
         }
     };
 

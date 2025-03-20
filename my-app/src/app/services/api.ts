@@ -1,8 +1,7 @@
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
 
 const instance = axios.create({
-  baseURL: 'https://localhost:7276/api', // ✅ 改成你的 API URL
+  baseURL: '/api', //交給 Proxy 處理
   headers: {
     'Content-Type': 'application/json',
   },
@@ -11,10 +10,16 @@ const instance = axios.create({
 
 // 自動附加 Token
 instance.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token && config.headers) config.headers.Authorization = `Bearer ${token}`;
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem('accessToken');
+    console.log('附加 Token:', token);
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
   return config;
 });
+
 
 // 統一錯誤處理
 instance.interceptors.response.use(
