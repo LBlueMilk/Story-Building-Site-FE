@@ -1,7 +1,15 @@
-# Node modules
-node_modules/
-.next/
+# VSCode setting folder (optional, if personal settings)
 .vscode/
+
+# Next.js build folder (避免誤 push)
+.next/
+
+# Node modules (重點補上)
+my-app/node_modules/
+
+# Build outputs
+out/
+dist/
 
 # Logs
 npm-debug.log*
@@ -9,20 +17,20 @@ yarn-debug.log*
 yarn-error.log*
 *.log
 
-# Build output
-out/
-dist/
-
 # Environment variables
 .env
 .env.local
 .env.*.local
 
-# System files
+# OS generated files
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# IDE settings
+# IDE files
 .idea/
 *.iml
+
+# Optional: SSL Certificates (你剛好有)
+my-app/cert/*.pem
+my-app/cert/**/*.pem
