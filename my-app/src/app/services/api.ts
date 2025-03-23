@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  baseURL: '/api', //交給 Proxy 處理
+  baseURL: process.env.NEXT_PUBLIC_API_URL
+    ? `${process.env.NEXT_PUBLIC_API_URL}/api`
+    : "/api", // 如果沒設定 env，就用 proxy
   headers: {
     'Content-Type': 'application/json',
   },
@@ -30,5 +32,6 @@ instance.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
 
 export default instance;

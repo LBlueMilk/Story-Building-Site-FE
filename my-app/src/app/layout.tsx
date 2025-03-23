@@ -6,6 +6,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { ThemeProvider } from "./context/ThemeContext";
 import { metadata } from "./metadata";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -25,6 +26,7 @@ export default function RootLayout({
             <Header />
             <main className="flex-grow p-4 container mx-auto">{children}</main>
             <Footer />
+            <Toaster richColors /> 
           </AuthProvider>
         </ThemeProvider>
       </body>

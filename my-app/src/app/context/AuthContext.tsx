@@ -1,14 +1,14 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { TokenService } from '../services/tokenService';
 
-interface StoryType {
+export interface StoryType {
   id: string;
   title: string;
 }
 
-interface UserType {
+export interface UserType {
   name?: string;
   stories: StoryType[];
 }
@@ -32,7 +32,6 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setTokenState] = useState<string | null>(null);
   const [user, setUserState] = useState<UserType | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     const storedToken = localStorage.getItem('accessToken');
@@ -42,8 +41,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const setToken = (token: string | null) => {
-    if (token) localStorage.setItem('accessToken', token);
-    else localStorage.removeItem('accessToken');
+    if (token) {
+      const refreshToken = TokenService.getRefreshToken() || '';
+      TokenService.setTokens(token, refreshToken); // 只更新 accessToken
+    } else {
+      TokenService.clearTokens();
+    }
     setTokenState(token);
   };
 
@@ -54,8 +57,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = () => {
-    setToken(null);
-    setUser(null);
+    TokenService.clearTokens();
+    setTokenState(null);
+    setUserState(null);
+    localStorage.removeItem('user');
   };
 
   return (

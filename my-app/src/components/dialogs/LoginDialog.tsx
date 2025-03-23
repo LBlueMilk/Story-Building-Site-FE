@@ -6,6 +6,7 @@ import { useAuth } from '../../app/context/AuthContext';
 import { login } from '../../app/services/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { TokenService } from '../../app/services/tokenService';
 
 interface LoginDialogProps {
     open: boolean;
@@ -33,9 +34,7 @@ export default function LoginDialog({ open, setOpen, openRegister }: LoginDialog
 
             const { accessToken, refreshToken, user } = response.data;
 
-            localStorage.setItem('accessToken', accessToken);
-            localStorage.setItem('refreshToken', refreshToken);
-
+            TokenService.setTokens(accessToken, refreshToken);
             setToken(accessToken);
             setUser(user);
 

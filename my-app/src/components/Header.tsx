@@ -20,6 +20,7 @@ export default function Header() {
   const [openRegister, setOpenRegister] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const [openCreate, setOpenCreate] = useState(false);
+  const [openCreateDialog, setOpenCreateDialog] = useState(false);
 
   const handleOpenRegister = () => {
     setOpenLogin(false);
@@ -35,6 +36,7 @@ export default function Header() {
     logout();
     router.push('/');
   };
+
 
   return (
     <nav className="flex justify-between items-center px-4 py-2 border-b shadow-sm bg-white dark:bg-gray-950">
@@ -55,7 +57,7 @@ export default function Header() {
           </Button>
         ) : (
           <>
-            <CreateStoryDialog />
+            <CreateStoryDialog open={openCreate} setOpen={setOpenCreate} />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -83,7 +85,14 @@ export default function Header() {
                       {story.title}
                     </DropdownMenuItem>
                   ))
-                ) : null}
+                ) : (
+                  <DropdownMenuItem
+                    onClick={() => setOpenCreate(true)}
+                    className="w-full justify-center text-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-md"
+                  >
+                    還沒故事呦，來建一個吧！
+                  </DropdownMenuItem>
+                )}
 
                 <DropdownMenuSeparator className="my-1 mx-2" />
 

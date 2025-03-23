@@ -27,6 +27,24 @@ interface RegisterRequest {
   name?: string;
 }
 
-export const login = (data: LoginRequest) => api.post<LoginResponse>('/auth/login', data);
+interface CreateStoryRequest {
+  title: string;
+  description?: string;
+  isPublic: boolean;
+}
 
-export const register = (data: RegisterRequest) => api.post<LoginResponse>('/auth/register', data);
+export const login = (data: LoginRequest) => 
+  api.post<LoginResponse>('/auth/login', data);
+
+export const register = (data: RegisterRequest) => 
+  api.post<LoginResponse>('/auth/register', data);
+
+export const createStory = (data: CreateStoryRequest, token: string) =>
+  api.post('/story', data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+
+
