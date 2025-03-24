@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const instance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL
@@ -10,7 +11,7 @@ const instance = axios.create({
   withCredentials: true,
 });
 
-// 自動附加 Token
+// Request Interceptor - 自動附加 Token
 instance.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token = localStorage.getItem('accessToken');
@@ -23,12 +24,41 @@ instance.interceptors.request.use((config) => {
 });
 
 
-// 統一錯誤處理
+// Response Interceptor - 統一錯誤處理
 instance.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('API Error:', error.response?.data || error.message);
-    alert(error.response?.data?.message || 'API 錯誤');
+    const status = error.response?.status;
+    const resData = typeof error.response?.data === 'object' ? error.response.data : null;
+    const message = resData?.message || resData?.error || resData?.detail || 'API 錯誤';
+
+    console.error('API Error:', message);
+
+    // 分類錯誤提示
+    switch (status) {
+      case 400:
+        toast.error(message || '請求錯誤');
+        break;
+      case 401:
+        toast.error('未授權，請重新登入');
+        break;
+      case 403:
+        toast.error('您沒有權限進行此操作');
+        break;
+      case 404:
+        toast.error('找不到資源');
+        break;
+      case 422:
+        toast.error('帳號或密碼錯誤');
+        break;
+      case 500:
+        toast.error('伺服器錯誤，請稍後再試');
+        break;
+      default:
+        toast.error(message);
+        break;
+    }
+
     return Promise.reject(error);
   }
 );

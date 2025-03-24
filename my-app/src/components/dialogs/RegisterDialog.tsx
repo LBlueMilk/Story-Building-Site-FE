@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { register } from '../../app/services/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '../../app/context/AuthContext';
+import { toast } from 'sonner';
 
 interface RegisterDialogProps {
     open: boolean;
@@ -28,9 +29,10 @@ export default function RegisterDialog({ open, setOpen, openLogin }: RegisterDia
             localStorage.setItem('accessToken', accessToken);
             localStorage.setItem('refreshToken', refreshToken);
     
-            setToken(accessToken);
             setUser(user);
+            setToken(accessToken);                       
             setOpen(false);
+            toast.success('註冊成功 🎉 請盡早至信箱驗證帳號');
             router.push('/');
         } catch (err) {
             // 錯誤透過 Interceptor 已處理

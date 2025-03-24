@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import axios from 'axios';
+import { toast } from 'sonner';
+
 
 interface EmailDialogProps {
   open: boolean;
@@ -30,7 +32,7 @@ export default function EmailDialog({ open, setOpen }: EmailDialogProps) {
         message
       });
 
-      alert('訊息已成功寄出！');
+      toast.success('訊息已成功寄出！');
       // 清空表單
       setName('');
       setEmail('');
@@ -38,7 +40,7 @@ export default function EmailDialog({ open, setOpen }: EmailDialogProps) {
       setOpen(false);
     } catch (error) {
       console.error('發送失敗:', error);
-      alert('發送失敗，請稍後再試');
+      toast.error('發送失敗，請稍後再試');
     } finally {
       setLoading(false);
     }

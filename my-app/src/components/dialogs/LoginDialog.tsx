@@ -7,6 +7,7 @@ import { login } from '../../app/services/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { TokenService } from '../../app/services/tokenService';
+import { toast } from 'sonner';
 
 interface LoginDialogProps {
     open: boolean;
@@ -35,10 +36,11 @@ export default function LoginDialog({ open, setOpen, openRegister }: LoginDialog
             const { accessToken, refreshToken, user } = response.data;
 
             TokenService.setTokens(accessToken, refreshToken);
-            setToken(accessToken);
+            
             setUser(user);
-
+            setToken(accessToken);
             setOpen(false);
+            toast.success('登入成功');
             router.push('/');
         } catch (err) {
             // 交由 Interceptor 處理

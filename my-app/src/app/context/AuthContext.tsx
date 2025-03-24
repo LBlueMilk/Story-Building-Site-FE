@@ -3,14 +3,9 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { TokenService } from '../services/tokenService';
 
-export interface StoryType {
-  id: string;
-  title: string;
-}
-
 export interface UserType {
   name?: string;
-  stories: StoryType[];
+  email?: string;
 }
 
 interface AuthContextType {
