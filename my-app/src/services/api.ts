@@ -64,4 +64,19 @@ instance.interceptors.response.use(
 );
 
 
+export async function getStoryById(id: number) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/story/${id}`, {
+    cache: 'no-store',
+  });
+
+  if (!res.ok) {
+    throw new Error('找不到該故事');
+  }
+
+  const data = await res.json();
+  return data;
+}
+
+
+
 export default instance;

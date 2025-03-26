@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { verifyPassword } from '@/app/services/auth';
+import { verifyPassword } from '@/services/auth';
 
 interface ConfirmPasswordDialogProps {
     open: boolean;

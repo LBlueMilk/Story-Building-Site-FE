@@ -1,12 +1,9 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import { TokenService } from '../services/tokenService';
+import { TokenService } from '@/services/tokenService';
+import { UserType } from '@/types/user';
 
-export interface UserType {
-  name?: string;
-  email?: string;
-}
 
 interface AuthContextType {
   token: string | null;

@@ -8,8 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import api from "@/app/services/api";
-import { useAuth, StoryType } from "@/app/context/AuthContext"; 
+import api from "@/services/api";
+import { useAuth,  } from "@/context/AuthContext"; 
+import { StoryType } from "@/types/story"; 
 
 interface CreateStoryDialogProps {
   open: boolean;
@@ -50,7 +51,7 @@ export default function CreateStoryDialog({ open, setOpen }: CreateStoryDialogPr
         if (user) {
           const updatedUser = {
             ...user,
-            stories: [...user.stories, newStory],
+            stories: [...(user.stories ?? []), newStory],
           };
           setUser(updatedUser);
         }

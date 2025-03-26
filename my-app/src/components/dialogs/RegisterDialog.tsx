@@ -2,9 +2,9 @@
 
 import { useState, Dispatch, SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
-import { register } from '../../app/services/auth';
+import { register } from '@/services/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useAuth } from '../../app/context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 
 interface RegisterDialogProps {

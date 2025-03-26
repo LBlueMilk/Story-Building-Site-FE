@@ -2,11 +2,11 @@
 
 import { useState, Dispatch, SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../app/context/AuthContext';
-import { login } from '../../app/services/auth';
+import { useAuth } from '../../context/AuthContext';
+import { login } from '@/services/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { TokenService } from '../../app/services/tokenService';
+import { TokenService } from '@/services/tokenService';
 import { toast } from 'sonner';
 
 interface LoginDialogProps {

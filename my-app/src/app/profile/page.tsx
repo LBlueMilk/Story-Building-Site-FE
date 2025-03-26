@@ -5,11 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { getProfile, updateProfile, getStories, deleteStory, StoryResponse, getDeletedStories, DeletedStoryResponse  } from '../services/auth';
-import { useAuth } from '../context/AuthContext';
-import { useStory } from '../context/StoryContext';
+import { getProfile, updateProfile, getStories, deleteStory, getDeletedStories, DeletedStoryResponse, getSharedStories, restoreStory } from '@/services/auth';
+import { useAuth } from '../../context/AuthContext';
+import { useStory } from '../../context/StoryContext';
 import ConfirmPasswordDialog from '@/components/dialogs/ConfirmPasswordDialog';
 import { Trash2, Undo2 } from 'lucide-react';
+import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
+import Link from 'next/link'
+
 
 
 export default function ProfilePage() {
@@ -25,6 +28,11 @@ export default function ProfilePage() {
     const [isVerified, setIsVerified] = useState(false);
     const [expandedStoryIds, setExpandedStoryIds] = useState<number[]>([]);
     const [deletedLoading, setDeletedLoading] = useState(false);
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [confirmTitle, setConfirmTitle] = useState('');
+    const [confirmDescription, setConfirmDescription] = useState('');
+    const [onConfirmAction, setOnConfirmAction] = useState<() => void>(() => () => { });
+
 
 
     // 取得個人資料
@@ -94,7 +102,8 @@ export default function ProfilePage() {
             setStoryLoading(true);
             try {
                 const { data } = await getStories();
-                setStories(data);
+                const sortedStories = data.sort((a, b) => a.id - b.id);
+                setStories(sortedStories);
                 console.log('取得故事成功：', data);
             } catch (err: any) {
                 const message = err.response?.data?.message || '取得故事失敗，請稍後再試';
@@ -107,6 +116,26 @@ export default function ProfilePage() {
         fetchStories();
     }, [activeTab, setStories, setStoryLoading]);
 
+    // 取得已分享故事
+    useEffect(() => {
+        if (activeTab !== 'shared') return;
+
+        const fetchSharedStories = async () => {
+            setStoryLoading(true);
+            try {
+                const shared = await getSharedStories();
+                setStories(shared); // 顯示已分享
+            } catch (err) {
+                // 錯誤處理由 axios interceptor 處理
+            } finally {
+                setStoryLoading(false);
+            }
+        };
+
+        fetchSharedStories();
+    }, [activeTab]);
+
+
     // 取得已刪除故事
     useEffect(() => {
         if (activeTab !== 'deleted') return;
@@ -115,7 +144,8 @@ export default function ProfilePage() {
             setDeletedLoading(true);
             try {
                 const { data } = await getDeletedStories();
-                setDeletedStories(data);
+                const sortedDeletedStories = data.sort((a, b) => a.id - b.id);
+                setDeletedStories(sortedDeletedStories);
             } catch (err: any) {
                 const message = err.response?.data?.message || '取得刪除故事失敗';
                 toast.error(message);
@@ -129,9 +159,23 @@ export default function ProfilePage() {
 
     return (
         <>
-            <ConfirmPasswordDialog open={isDialogOpen} setOpen={setIsDialogOpen} onVerified={handleVerified}
+
+            <ConfirmPasswordDialog
+                open={isDialogOpen}
+                setOpen={setIsDialogOpen}
+                onVerified={handleVerified}
             />
 
+            <ConfirmDialog
+                open={confirmOpen}
+                title={confirmTitle}
+                description={confirmDescription}
+                onCancel={() => setConfirmOpen(false)}
+                onConfirm={() => {
+                    onConfirmAction();
+                    setConfirmOpen(false);
+                }}
+            />
             <div className="flex flex-col items-center p-8 space-y-6 min-h-[600px] bg-muted/40">
                 <div className="flex w-full max-w-6xl shadow-lg rounded-2xl overflow-hidden bg-white dark:bg-gray-900 min-h-[500px]">
                     {/* 左側選單 */}
@@ -229,17 +273,18 @@ export default function ProfilePage() {
                                                             className="absolute top-2 right-2 text-red-500"
                                                             size="sm"
                                                             onClick={async () => {
-                                                                if (confirm('確定要刪除這個故事嗎？')) {
+                                                                setConfirmTitle('確認刪除故事');
+                                                                setConfirmDescription('確定要刪除這個故事嗎？刪除後 30 天內可還原');
+                                                                setOnConfirmAction(() => async () => {
                                                                     try {
                                                                         await deleteStory(Number(story.id));
-                                                                        // 更新前端故事列表
                                                                         setStories(stories.filter((s) => s.id !== story.id));
                                                                         toast.success('故事已刪除');
                                                                     } catch (err: any) {
-                                                                        const message = err.response?.data?.message || '刪除故事失敗';
-                                                                        toast.error(message);
+                                                                        toast.error('刪除故事失敗');
                                                                     }
-                                                                }
+                                                                });
+                                                                setConfirmOpen(true);
                                                             }}
                                                         >
                                                             <Trash2 size={16} />
@@ -275,7 +320,12 @@ export default function ProfilePage() {
                                                                     }
                                                                 }}
                                                             >
-                                                                {isExpanded ? '收合' : '閱讀更多'}
+                                                                <Link
+                                                                    href={`/story/${story.id}`}
+                                                                    className="text-blue-500 hover:underline text-sm mt-2 inline-block"
+                                                                >
+                                                                    詳細內容
+                                                                </Link>
                                                             </Button>
                                                         </div>
                                                     </Card>
@@ -285,8 +335,41 @@ export default function ProfilePage() {
                                     </div>
                                 )}
 
+                                {/* 已分享故事 */}
                                 {activeTab === 'shared' && (
-                                    <p>這裡顯示使用者已分享的故事列表。（未來可擴充）</p>
+                                    <div className="space-y-4">
+                                        {storyLoading ? (
+                                            <p>載入中...</p>
+                                        ) : stories.length === 0 ? (
+                                            <p>尚未分享任何故事。</p>
+                                        ) : (
+                                            stories.map((story) => (
+                                                <Card key={story.id} className="border p-4 relative">
+                                                    <h3 className="font-bold">{story.title}</h3>
+                                                    <p className="text-sm text-gray-500">
+                                                        {story.description || '（無描述）'}
+                                                    </p>
+                                                    <p className="text-xs mt-2">
+                                                        建立時間：{new Date(story.createdAt).toLocaleString()}
+                                                    </p>
+                                                    <div className="mt-2 text-sm text-muted-foreground">
+                                                        分享對象：
+                                                        {story.sharedUsers && story.sharedUsers.length > 0 ? (
+                                                            <ul className="list-disc list-inside">
+                                                                {story.sharedUsers.map((user, index) => (
+                                                                    <li key={index}>
+                                                                        {user.name}（{user.email}）
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        ) : (
+                                                            <p className="text-sm text-muted-foreground mt-2">尚未分享給任何人</p>
+                                                        )}
+                                                    </div>
+                                                </Card>
+                                            ))
+                                        )}
+                                    </div>
                                 )}
 
                                 {/* 已刪除故事 */}
@@ -303,9 +386,24 @@ export default function ProfilePage() {
                                                         variant="ghost"
                                                         className="absolute top-2 right-2 text-blue-500"
                                                         size="sm"
-                                                        disabled
+                                                        onClick={async () => {
+                                                            setConfirmTitle('確認還原故事');
+                                                            setConfirmDescription('確定要還原這個故事嗎？還原後若要刪除需再等 30 天');
+                                                            setOnConfirmAction(() => async () => {
+                                                                try {
+                                                                    await restoreStory(Number(story.id));
+                                                                    setDeletedStories(deletedStories.filter((s) => s.id !== story.id));
+                                                                    toast.success('故事已還原');
+
+                                                                } catch (err: any) {
+                                                                    toast.error('還原故事失敗');
+                                                                }
+                                                            });
+                                                            setConfirmOpen(true);
+
+                                                        }}
                                                     >
-                                                        <Undo2 size={16} /> {/* 目前不實作還原 */}
+                                                        <Undo2 size={16} />
                                                     </Button>
                                                     <h3 className="font-bold">{story.title}</h3>
                                                     <p className="text-sm text-gray-500">

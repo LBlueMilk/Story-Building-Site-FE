@@ -1,12 +1,9 @@
 'use client';
 
 import { createContext, useContext, useState } from 'react';
-import { StoryResponse } from '../services/auth';
+import { StoryResponse } from '@/services/auth';
 
-export interface StoryType {
-    id: string;
-    title: string;
-  }  
+
 
 interface StoryContextType {
   stories: StoryResponse[];

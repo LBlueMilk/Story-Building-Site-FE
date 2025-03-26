@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { useAuth } from '@/app/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -10,7 +10,7 @@ import LoginDialog from '@/components/dialogs/LoginDialog';
 import RegisterDialog from '@/components/dialogs/RegisterDialog';
 import Image from 'next/image';
 import AnnouncementButton from "@/components/AnnouncementButton";
-import { useTheme } from '@/app/context/ThemeContext';
+import { useTheme } from '@/context/ThemeContext';
 import CreateStoryDialog from '@/components/dialogs/CreateStoryDialog';
 
 export default function Header() {
