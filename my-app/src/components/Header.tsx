@@ -1,26 +1,45 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { MenuIcon } from 'lucide-react';
+import Image from 'next/image';
 import LoginDialog from '@/components/dialogs/LoginDialog';
 import RegisterDialog from '@/components/dialogs/RegisterDialog';
-import Image from 'next/image';
-import AnnouncementButton from "@/components/AnnouncementButton";
-import { useTheme } from '@/context/ThemeContext';
 import CreateStoryDialog from '@/components/dialogs/CreateStoryDialog';
+import AnnouncementButton from '@/components/AnnouncementButton';
+import { useTheme } from '@/context/ThemeContext';
+import { customButton } from '@/lib/buttonVariants';
+import { useStory } from '@/context/StoryContext';
 
 export default function Header() {
   const { token, user, logout } = useAuth();
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
+
   const [openLogin, setOpenLogin] = useState(false);
   const [openRegister, setOpenRegister] = useState(false);
-  const { theme, toggleTheme } = useTheme();
   const [openCreate, setOpenCreate] = useState(false);
-  const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { stories } = useStory();
+
+
 
   const handleOpenRegister = () => {
     setOpenLogin(false);
@@ -37,50 +56,87 @@ export default function Header() {
     router.push('/');
   };
 
+  useEffect(() => {
+    const handler = () => {
+      const isDesktop = window.innerWidth >= 768;
+      setIsMobileMenuOpen(!isDesktop ? isMobileMenuOpen : false);
+      setDropdownOpen(isDesktop ? false : dropdownOpen);
+    };
+
+    window.addEventListener('resize', handler);
+
+    // 初始化強制關閉選單
+    if (window.innerWidth >= 768) {
+      setIsMobileMenuOpen(false);
+      setDropdownOpen(false);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handler);
+    };
+  }, []);
+
+
+
+
 
   return (
-    <nav className="flex justify-between items-center px-4 py-2 border-b shadow-sm bg-white dark:bg-gray-950">
-      <div className="flex items-center gap-4">
+    <nav className="w-full flex items-center justify-between px-4 py-2 border-b bg-white dark:bg-gray-950 shadow-sm">
+      {/* 左側區塊 */}
+      <div className="flex items-center gap-3">
         <Link href="/">
-          <Image src="/logo.png" alt="網站LOGO" width={40} height={40} priority />
+          <Image src="/logo.png" alt="網站LOGO" width={40} height={40} />
         </Link>
-        <Button variant="outline" onClick={toggleTheme} className="h-8 px-3">
-          {theme === 'light' ? '🌞' : '🌙'}
-        </Button>
-        <AnnouncementButton />
+        <div className="hidden md:flex items-center gap-3">
+          <Button
+            variant="ghost"
+            className={customButton({ intent: 'ghost', size: 'sm' })}
+            onClick={toggleTheme}
+          >
+            {theme === 'light' ? '🌞' : '🌙'}
+          </Button>
+          <AnnouncementButton />
+        </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      {/* 右側登入區（桌面） */}
+      <div className="hidden md:flex items-center gap-3">
         {!token ? (
-          <Button variant="default" onClick={() => setOpenLogin(true)} className="h-8 px-3">
+          <Button
+            variant="default"
+            className={customButton({ intent: 'primary', size: 'sm' })}
+            onClick={() => setOpenLogin(true)}
+          >
             登入
           </Button>
         ) : (
           <>
             <CreateStoryDialog open={openCreate} setOpen={setOpenCreate} />
-
-            <DropdownMenu>
+            <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
               <DropdownMenuTrigger asChild>
-                <Button variant="secondary" className="px-3 h-8">
-                  歡迎 {user?.name || ' '}
+                <Button
+                  variant="secondary"
+                  className={customButton({ intent: 'secondary', size: 'sm' })}
+                >
+                  歡迎 {user?.name || ''}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[12rem] bg-white dark:bg-gray-900 rounded-md shadow-md text-center">
+              <DropdownMenuContent align="end" className="min-w-[12rem]">
                 <DropdownMenuItem
                   onClick={() => router.push('/profile')}
-                  className="w-full justify-center text-center truncate hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-md"
+                  className="justify-center text-center"
                 >
                   個人資料
                 </DropdownMenuItem>
 
-                <DropdownMenuSeparator className="my-1 mx-2" />
+                <DropdownMenuSeparator />
 
-                {user?.stories && user.stories.length > 0 ? (
-                  user.stories.map((story) => (
+                {stories && stories.length > 0 ? (
+                  stories.map((story) => (
                     <DropdownMenuItem
                       key={story.id}
                       onClick={() => router.push(`/story/${story.id}`)}
-                      className="w-full justify-center text-center truncate hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-md"
+                      className="justify-center text-center"
                     >
                       {story.title}
                     </DropdownMenuItem>
@@ -88,17 +144,17 @@ export default function Header() {
                 ) : (
                   <DropdownMenuItem
                     onClick={() => setOpenCreate(true)}
-                    className="w-full justify-center text-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-md"
+                    className="justify-center text-center"
                   >
                     還沒故事呦，來建一個吧！
                   </DropdownMenuItem>
                 )}
 
-                <DropdownMenuSeparator className="my-1 mx-2" />
+                <DropdownMenuSeparator />
 
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="w-full justify-center text-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-md"
+                  className="justify-center text-center"
                 >
                   登出
                 </DropdownMenuItem>
@@ -108,6 +164,106 @@ export default function Header() {
         )}
       </div>
 
+      {/* 手機版選單 */}
+      <div className="md:hidden">
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+            >
+              <MenuIcon className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="bg-white dark:bg-gray-950 w-[240px]">
+            <div className="flex flex-col gap-3 mt-4">
+              <Button
+                className={customButton({ intent: 'ghost', size: 'default' })}
+                onClick={() => {
+                  toggleTheme();
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                {theme === 'light' ? '🌞' : '🌙'}
+              </Button>
+
+              <AnnouncementButton onClick={() => setIsMobileMenuOpen(false)} />
+
+              {!token ? (
+                <Button
+                  className={customButton({ intent: 'primary', size: 'default' })}
+                  onClick={() => {
+                    setOpenLogin(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  登入
+                </Button>
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <Button
+                    className={customButton({ intent: 'ghost' })}
+                    onClick={() => {
+                      router.push('/profile');
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    個人資料
+                  </Button>
+                  {stories && stories.length > 0 ? (
+                    stories.map((story) => (
+                      <Button
+                        key={story.id}
+                        className={customButton({ intent: 'ghost' })}
+                        onClick={() => {
+                          router.push(`/story/${story.id}`);
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        {story.title}
+                      </Button>
+                    ))
+                  ) : (
+                    <Button
+                      className={customButton({ intent: 'ghost' })}
+                      onClick={() => {
+                        setOpenCreate(true);
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      還沒故事呦，來建一個吧！
+                    </Button>
+                  )}
+
+
+                  <Button
+                    className={customButton({ intent: 'outline' })}
+                    onClick={() => {
+                      setOpenCreate(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    建立故事
+                  </Button>
+
+                  <Button
+                    className={customButton({ intent: 'destructive' })}
+                    onClick={() => {
+                      handleLogout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    登出
+                  </Button>
+                </div>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      {/* Dialogs */}
       <LoginDialog open={openLogin} setOpen={setOpenLogin} openRegister={handleOpenRegister} />
       <RegisterDialog open={openRegister} setOpen={setOpenRegister} openLogin={handleOpenLogin} />
     </nav>

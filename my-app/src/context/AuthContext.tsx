@@ -3,13 +3,14 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { TokenService } from '@/services/tokenService';
 import { UserType } from '@/types/user';
+import { useRouter } from 'next/navigation';
 
 
 interface AuthContextType {
   token: string | null;
-  user: UserType | null;
   setToken: (token: string | null) => void;
-  setUser: (user: UserType | null) => void;
+  user: UserType | null;  
+  setUser: (user: UserType | any | null) => void;
   logout: () => void;
 }
 
@@ -42,17 +43,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setTokenState(token);
   };
 
-  const setUser = (user: UserType | null) => {
-    if (user) localStorage.setItem('user', JSON.stringify(user));
-    else localStorage.removeItem('user');
-    setUserState(user);
+  const setUser = (user: any | null) => {
+    if (user) {
+      const formattedUser: UserType = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        stories: user.stories || [],
+      };
+      localStorage.setItem('user', JSON.stringify(formattedUser));
+      setUserState(formattedUser);
+    } else {
+      localStorage.removeItem('user');
+      setUserState(null);
+    }
   };
-
+  
+  const router = useRouter();
   const logout = () => {
     TokenService.clearTokens();
     setTokenState(null);
     setUserState(null);
     localStorage.removeItem('user');
+    router.push('/'); 
   };
 
   return (

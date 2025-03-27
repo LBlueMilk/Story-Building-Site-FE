@@ -47,7 +47,11 @@ export default function ProfilePage() {
                     const { data } = await getProfile();
                     setEmail(data.email);
                     setName(data.name);
-                    setUser({ name: data.name, email: data.email });
+                    setUser({
+                        id: data.id,
+                        name: data.name,
+                        email: data.email,
+                    });
                 } catch (err) {
                     toast.error('無法取得個人資料，請重新登入或稍後再試');
                 } finally {
@@ -124,10 +128,10 @@ export default function ProfilePage() {
             setStoryLoading(true);
             try {
                 const shared = await getSharedStories();
-                setStories(shared); // 顯示已分享
-            } catch (err) {
-                // 錯誤處理由 axios interceptor 處理
-            } finally {
+                console.log('分享故事回傳：', shared);
+                setStories(shared);
+            } catch (err) { }
+            finally {
                 setStoryLoading(false);
             }
         };
@@ -138,17 +142,19 @@ export default function ProfilePage() {
 
     // 取得已刪除故事
     useEffect(() => {
-        if (activeTab !== 'deleted') return;
+        if (activeTab !== "deleted") return;
 
         async function fetchDeletedStories() {
             setDeletedLoading(true);
             try {
                 const { data } = await getDeletedStories();
-                const sortedDeletedStories = data.sort((a, b) => a.id - b.id);
-                setDeletedStories(sortedDeletedStories);
+                const sorted = data.sort((a, b) => a.id - b.id);
+                setDeletedStories(sorted);
             } catch (err: any) {
-                const message = err.response?.data?.message || '取得刪除故事失敗';
-                toast.error(message);
+                if (err?.response?.status >= 400) {
+                    const msg = err.response?.data?.message || "取得刪除故事失敗";
+                    toast.error(msg);
+                }
             } finally {
                 setDeletedLoading(false);
             }
@@ -353,17 +359,23 @@ export default function ProfilePage() {
                                                         建立時間：{new Date(story.createdAt).toLocaleString()}
                                                     </p>
                                                     <div className="mt-2 text-sm text-muted-foreground">
-                                                        分享對象：
-                                                        {story.sharedUsers && story.sharedUsers.length > 0 ? (
-                                                            <ul className="list-disc list-inside">
-                                                                {story.sharedUsers.map((user, index) => (
-                                                                    <li key={index}>
-                                                                        {user.name}（{user.email}）
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
+                                                        {story.creatorId === user?.id ? (
+                                                            story.sharedUsers && story.sharedUsers.length > 0 ? (
+                                                                <>
+                                                                    您分享給以下使用者：
+                                                                    <ul className="list-disc list-inside">
+                                                                        {story.sharedUsers.map((u, index) => (
+                                                                            <li key={index}>
+                                                                                {u.name}（{u.email}）
+                                                                            </li>
+                                                                        ))}
+                                                                    </ul>
+                                                                </>
+                                                            ) : (
+                                                                <p>尚未分享給任何人</p>
+                                                            )
                                                         ) : (
-                                                            <p className="text-sm text-muted-foreground mt-2">尚未分享給任何人</p>
+                                                            <p>由 {story.creatorName || '（未知建立者）'}（{story.creatorEmail || '未知 Email'}） 分享給您</p>
                                                         )}
                                                     </div>
                                                 </Card>

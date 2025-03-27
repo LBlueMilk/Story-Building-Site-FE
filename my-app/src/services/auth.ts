@@ -13,6 +13,10 @@ export interface StoryResponse {
   isPublic: boolean;
   createdAt: string;
   sharedUsers?: { name: string; email: string }[];
+
+  creatorId: number;
+  creatorName: string;
+  creatorEmail: string;
 }
 
 // 已刪除的故事
@@ -122,9 +126,9 @@ export const getDeletedStories = () =>
 export const restoreStory = (id: number) =>
   api.post(`/story/restore/${id}`);
 
-// 取得已分享故事（isPublic = true）
+// 改為呼叫 /story/shared/all，取得自己分享 & 被分享的所有故事
 export const getSharedStories = async (): Promise<StoryResponse[]> => {
-  const { data } = await api.get<StoryResponse[]>('/story');
-  return data.filter((story) => story.isPublic);
+  const { data } = await api.get<StoryResponse[]>('/story/shared/all');
+  return data;
 };
 
