@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import api from "@/services/api";
-import { useAuth,  } from "@/context/AuthContext"; 
-import { StoryType } from "@/types/story"; 
+import { useAuth, } from "@/context/AuthContext";
+import { StoryType } from "@/types/story";
 
 interface CreateStoryDialogProps {
   open: boolean;
@@ -61,12 +61,14 @@ export default function CreateStoryDialog({ open, setOpen }: CreateStoryDialogPr
         setIsPublic(false);
         setOpen(false);
       } else {
-        toast.error("故事建立失敗");
+        toast.dismiss('story-error');
+        toast.error("故事建立失敗", { id: 'story-error' });
       }
 
     } catch (error) {
       console.error(error);
-      toast.error("故事建立失敗，請稍後再試");
+      toast.dismiss('story-error');
+      toast.error("故事建立失敗，請稍後再試", { id: 'story-error' });
     } finally {
       setLoading(false);
     }

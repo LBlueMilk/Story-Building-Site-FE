@@ -29,9 +29,13 @@ export default function ConfirmPasswordDialog({
             setOpen(false);
             onVerified(); // 通知 Profile 執行更新
         } catch (err: any) {
-            const message = err.response?.data?.message || '密碼驗證失敗，請重新輸入';
-            toast.error(message);
-        } finally {
+            const rawMessage = err?.response?.data?.message;
+            const finalMessage = typeof rawMessage === 'string' ? rawMessage : '密碼驗證失敗，請重新輸入';
+
+            toast.dismiss('confirm-password-error');
+            toast.error(finalMessage, { id: 'confirm-password-error' });
+        }
+        finally {
             setIsVerifying(false);
             setPassword('');
         }

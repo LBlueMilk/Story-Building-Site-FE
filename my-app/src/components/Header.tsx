@@ -16,6 +16,8 @@ import {
   Sheet,
   SheetContent,
   SheetTrigger,
+  SheetHeader,
+  SheetTitle,
 } from '@/components/ui/sheet';
 import { MenuIcon } from 'lucide-react';
 import Image from 'next/image';
@@ -25,7 +27,10 @@ import CreateStoryDialog from '@/components/dialogs/CreateStoryDialog';
 import AnnouncementButton from '@/components/AnnouncementButton';
 import { useTheme } from '@/context/ThemeContext';
 import { customButton } from '@/lib/buttonVariants';
-import { useStory } from '@/context/StoryContext';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
+import { getStories } from '@/services/auth';
+import { StoryResponse } from '@/types/story';
+
 
 export default function Header() {
   const { token, user, logout } = useAuth();
@@ -37,9 +42,7 @@ export default function Header() {
   const [openCreate, setOpenCreate] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { stories } = useStory();
-
-
+  const [myStories, setMyStories] = useState<StoryResponse[]>([]);
 
   const handleOpenRegister = () => {
     setOpenLogin(false);
@@ -52,9 +55,32 @@ export default function Header() {
   };
 
   const handleLogout = () => {
+    setMyStories([]); // 清空
     logout();
     router.push('/');
-  };
+  };  
+
+  const [isStoriesLoading, setIsStoriesLoading] = useState(true);
+
+
+  useEffect(() => {
+    async function preloadMyStories() {
+      try {
+        setIsStoriesLoading(true);
+        const { data } = await getStories(); // /api/story，只會回傳自己建立的故事
+        setMyStories(data);
+      } catch (err) {
+        console.error('Header 載入 myStories 失敗', err);
+      } finally {
+        setIsStoriesLoading(false);
+      }
+    }
+  
+    if (token) {
+      preloadMyStories();
+    }
+  }, [token]);  
+
 
   useEffect(() => {
     const handler = () => {
@@ -131,8 +157,12 @@ export default function Header() {
 
                 <DropdownMenuSeparator />
 
-                {stories && stories.length > 0 ? (
-                  stories.map((story) => (
+                {isStoriesLoading ? (
+                  <DropdownMenuItem disabled className="justify-center text-center text-gray-500">
+                    載入中...
+                  </DropdownMenuItem>
+                ) : myStories.length > 0 ? (
+                  myStories.map((story) => (
                     <DropdownMenuItem
                       key={story.id}
                       onClick={() => router.push(`/story/${story.id}`)}
@@ -149,6 +179,7 @@ export default function Header() {
                     還沒故事呦，來建一個吧！
                   </DropdownMenuItem>
                 )}
+
 
                 <DropdownMenuSeparator />
 
@@ -177,6 +208,11 @@ export default function Header() {
             </Button>
           </SheetTrigger>
           <SheetContent side="right" className="bg-white dark:bg-gray-950 w-[240px]">
+            <SheetHeader>
+              <VisuallyHidden>
+                <SheetTitle>主選單</SheetTitle>
+              </VisuallyHidden>
+            </SheetHeader>
             <div className="flex flex-col gap-3 mt-4">
               <Button
                 className={customButton({ intent: 'ghost', size: 'default' })}
@@ -211,8 +247,13 @@ export default function Header() {
                   >
                     個人資料
                   </Button>
-                  {stories && stories.length > 0 ? (
-                    stories.map((story) => (
+
+                  {isStoriesLoading ? (
+                    <Button disabled className={customButton({ intent: 'ghost' })}>
+                      載入中...
+                    </Button>
+                  ) : myStories.length > 0 ? (
+                    myStories.map((story) => (
                       <Button
                         key={story.id}
                         className={customButton({ intent: 'ghost' })}

@@ -1,22 +1,9 @@
 import api from './api';
+import { StoryResponse } from '@/types/story';
 
 interface StoryType {
   id: number;
   title: string;
-}
-
-// 未刪除的故事
-export interface StoryResponse {
-  id: number;
-  title: string;
-  description: string | null;
-  isPublic: boolean;
-  createdAt: string;
-  sharedUsers?: { name: string; email: string }[];
-
-  creatorId: number;
-  creatorName: string;
-  creatorEmail: string;
 }
 
 // 已刪除的故事

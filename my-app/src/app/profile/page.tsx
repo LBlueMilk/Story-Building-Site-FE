@@ -21,7 +21,7 @@ export default function ProfilePage() {
     const [name, setName] = useState('');
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const { user, setUser } = useAuth();
+    const { user, token, setUser } = useAuth();
     const { stories, setStories, storyLoading, setStoryLoading } = useStory();
     const [deletedStories, setDeletedStories] = useState<DeletedStoryResponse[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -34,33 +34,50 @@ export default function ProfilePage() {
     const [onConfirmAction, setOnConfirmAction] = useState<() => void>(() => () => { });
 
 
-
-    // 取得個人資料
     useEffect(() => {
-        if (user) {
-            setEmail(user.email || '');
-            setName(user.name || '');
-            setLoading(false);
-        } else {
-            async function fetchProfile() {
-                try {
-                    const { data } = await getProfile();
+        let isMounted = true;
+
+        async function loadUserProfile() {
+            if (!token) {
+                setLoading(false);
+                return; // ✅ 未登入就不呼叫 API
+            }
+
+            try {
+                const { data } = await getProfile();
+
+                if (isMounted) {
                     setEmail(data.email);
                     setName(data.name);
-                    setUser({
-                        id: data.id,
-                        name: data.name,
-                        email: data.email,
-                    });
-                } catch (err) {
-                    toast.error('無法取得個人資料，請重新登入或稍後再試');
-                } finally {
-                    setLoading(false);
+
+                    // 同步更新到 AuthContext（如果還沒設定）
+                    if (!user || !user.email) {
+                        setUser({
+                            id: data.id,
+                            name: data.name,
+                            email: data.email,
+                        });
+                    }
                 }
+            } catch (err) {
+                if (isMounted) {
+                    // ✅ 僅在登入狀態才顯示錯誤
+                    if (token) {
+                        toast.error('無法取得個人資料，請重新登入或稍後再試');
+                    }
+                }
+            } finally {
+                if (isMounted) setLoading(false);
             }
-            fetchProfile();
         }
-    }, [user, setUser]);
+
+        loadUserProfile();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [token, user, setUser]);
+
 
     // 密碼驗證成功後觸發
     const handleVerified = async () => {

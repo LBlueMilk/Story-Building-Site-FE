@@ -4,9 +4,24 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import RegisterDialog from '@/components/dialogs/RegisterDialog';
+import { useState } from 'react';
+import LoginDialog from '@/components/dialogs/LoginDialog';
+
 
 export default function HomePage() {
   const router = useRouter();
+  const [openRegister, setOpenRegister] = useState(false);
+  const [openLogin, setOpenLogin] = useState(false);
+  const handleOpenRegister = () => {
+    setOpenLogin(false);
+    setOpenRegister(true);
+  };
+
+  const handleOpenLogin = () => {
+    setOpenRegister(false);
+    setOpenLogin(true);
+  };
 
   return (
     <div className="flex flex-col">
@@ -39,7 +54,7 @@ export default function HomePage() {
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               className="text-lg px-6 py-4"
-              onClick={() => router.push('/register')}
+              onClick={() => setOpenRegister(true)}
             >
               🚀 立即加入，開始創作
             </Button>
@@ -69,21 +84,21 @@ export default function HomePage() {
             {
               title: '📘 角色管理',
               desc: '記錄角色背景、關係與設定，支援標籤與分類。',
-              img: '/feature-character.png',
+              img: '/feature-character.svg',
               alt: '角色管理',
               delay: 0.1,
             },
             {
               title: '📅 視覺化時間軸',
               desc: '事件以時間軸方式排列，幫助你掌握故事脈絡。',
-              img: '/feature-timeline.png',
+              img: '/feature-timeline.svg',
               alt: '時間軸',
               delay: 0.2,
             },
             {
               title: '🗺️ 自由畫布',
               desc: '繪製地圖、標記場景、支援手繪與便條互動。',
-              img: '/feature-canvas.png',
+              img: '/feature-canvas.svg',
               alt: '自由畫布',
               delay: 0.3,
             },
@@ -126,12 +141,22 @@ export default function HomePage() {
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
             className="text-lg px-6 py-4"
-            onClick={() => router.push('/register')}
+            onClick={() => setOpenRegister(true)}
           >
             ✍️ 立即開始
           </Button>
         </motion.div>
       </section>
+
+      <RegisterDialog
+        open={openRegister}
+        setOpen={setOpenRegister}
+        openLogin={handleOpenLogin} />
+      <LoginDialog
+        open={openLogin}
+        setOpen={setOpenLogin}
+        openRegister={handleOpenRegister}
+      />
     </div>
   );
 }

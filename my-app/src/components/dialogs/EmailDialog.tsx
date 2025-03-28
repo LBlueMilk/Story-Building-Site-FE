@@ -40,8 +40,10 @@ export default function EmailDialog({ open, setOpen }: EmailDialogProps) {
       setOpen(false);
     } catch (error) {
       console.error('發送失敗:', error);
-      toast.error('發送失敗，請稍後再試');
-    } finally {
+      toast.dismiss('email-error'); // 關掉舊的錯誤提示
+      toast.error('發送失敗，請稍後再試', { id: 'email-error' }); // 限制只顯示一次
+    }
+    finally {
       setLoading(false);
     }
   };
@@ -50,7 +52,7 @@ export default function EmailDialog({ open, setOpen }: EmailDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="bg-white dark:bg-neutral-900 text-black dark:text-white">
         <DialogHeader>
-        <DialogTitle className="text-center text-lg font-bold">聯絡我們</DialogTitle>
+          <DialogTitle className="text-center text-lg font-bold">聯絡我們</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
           <Input
