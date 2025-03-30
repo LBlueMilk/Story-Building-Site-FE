@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/dialog'
 
 import { Button } from '@/components/ui/button'
-import { useStory } from "@/context/StoryContext";
 
 export function ConfirmDialog({
   open,
