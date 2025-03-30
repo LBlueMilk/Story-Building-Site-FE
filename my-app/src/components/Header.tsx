@@ -29,20 +29,18 @@ import { useTheme } from '@/context/ThemeContext';
 import { customButton } from '@/lib/buttonVariants';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { getStories } from '@/services/auth';
-import { StoryResponse } from '@/types/story';
-
+import { useStory } from "@/context/StoryContext";
 
 export default function Header() {
   const { token, user, logout } = useAuth();
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
-
   const [openLogin, setOpenLogin] = useState(false);
   const [openRegister, setOpenRegister] = useState(false);
   const [openCreate, setOpenCreate] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [myStories, setMyStories] = useState<StoryResponse[]>([]);
+  const { stories: myStories, storyLoading: isStoriesLoading, setStories } = useStory();
 
   const handleOpenRegister = () => {
     setOpenLogin(false);
@@ -55,32 +53,10 @@ export default function Header() {
   };
 
   const handleLogout = () => {
-    setMyStories([]); // 清空
+    setStories([]); 
     logout();
     router.push('/');
-  };  
-
-  const [isStoriesLoading, setIsStoriesLoading] = useState(true);
-
-
-  useEffect(() => {
-    async function preloadMyStories() {
-      try {
-        setIsStoriesLoading(true);
-        const { data } = await getStories(); // /api/story，只會回傳自己建立的故事
-        setMyStories(data);
-      } catch (err) {
-        console.error('Header 載入 myStories 失敗', err);
-      } finally {
-        setIsStoriesLoading(false);
-      }
-    }
-  
-    if (token) {
-      preloadMyStories();
-    }
-  }, [token]);  
-
+  };
 
   useEffect(() => {
     const handler = () => {

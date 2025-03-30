@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import api from "@/services/api";
 import { useAuth, } from "@/context/AuthContext";
 import { StoryType } from "@/types/story";
+import { useStory } from "@/context/StoryContext";
 
 interface CreateStoryDialogProps {
   open: boolean;
@@ -25,6 +26,7 @@ export default function CreateStoryDialog({ open, setOpen }: CreateStoryDialogPr
   const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(false);
   const { user, setUser } = useAuth();
+  const { fetchStories } = useStory();
 
   const handleCreateStory = async () => {
     if (title.trim() === "") {
@@ -60,6 +62,7 @@ export default function CreateStoryDialog({ open, setOpen }: CreateStoryDialogPr
         setDescription("");
         setIsPublic(false);
         setOpen(false);
+        await fetchStories(); // 刷新 Context 中的資料
       } else {
         toast.dismiss('story-error');
         toast.error("故事建立失敗", { id: 'story-error' });
