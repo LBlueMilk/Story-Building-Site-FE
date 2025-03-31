@@ -1,5 +1,6 @@
 import api from './api';
 import { StoryResponse } from '@/types/story';
+import { UserType } from '@/types/user'; 
 
 interface StoryType {
   id: number;
@@ -16,24 +17,10 @@ export interface DeletedStoryResponse {
   deletedAt: string | null; // Only for deleted
 }
 
-export interface UserType {
-  id?: number;
-  email?: string;
-  name?: string;
-  userCode?: string;
-  isVerified?: boolean;
-  createdAt?: string;
-  loginProviders?: string[];
-  stories: StoryType[];
-}
-
 interface LoginResponse {
   accessToken: string;
   refreshToken: string;
-  user: {
-    name?: string;
-    stories: StoryType[];
-  };
+  user: UserType;
 }
 
 interface LoginRequest {
@@ -118,4 +105,14 @@ export const getSharedStories = async (): Promise<StoryResponse[]> => {
   const { data } = await api.get<StoryResponse[]>('/story/shared/all');
   return data;
 };
+
+// 刪除帳號（實際為標記延遲刪除）
+export async function deleteAccount() {
+  return api.delete('/auth/delete-account');
+}
+
+// 還原帳號
+export const restoreAccount = () => {
+  return api.put('/auth/restore-account') 
+}
 

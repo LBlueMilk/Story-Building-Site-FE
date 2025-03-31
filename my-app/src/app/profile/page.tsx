@@ -12,7 +12,11 @@ import ConfirmPasswordDialog from '@/components/dialogs/ConfirmPasswordDialog';
 import { Trash2, Undo2 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import Link from 'next/link'
+import { deleteAccount } from '@/services/auth';
+import { StoryResponse } from '@/types/story';
 
+/// 判斷是更新個人資料還是刪除帳號
+type PasswordPurpose = 'updateProfile' | 'deleteAccount' | null;
 
 
 export default function ProfilePage() {
@@ -32,6 +36,9 @@ export default function ProfilePage() {
     const [confirmTitle, setConfirmTitle] = useState('');
     const [confirmDescription, setConfirmDescription] = useState('');
     const [onConfirmAction, setOnConfirmAction] = useState<() => void>(() => () => { });
+    const [sharedStories, setSharedStories] = useState<StoryResponse[]>([]);
+    const [confirmPurpose, setConfirmPurpose] = useState<PasswordPurpose>(null);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
 
     useEffect(() => {
@@ -112,7 +119,7 @@ export default function ProfilePage() {
 
     // 點擊更新資料按鈕
     const handleUpdateClick = () => {
-        setIsDialogOpen(true);
+        setConfirmPurpose('updateProfile');
     };
 
     // 取得故事
@@ -146,9 +153,10 @@ export default function ProfilePage() {
             try {
                 const shared = await getSharedStories();
                 console.log('分享故事回傳：', shared);
-                setStories(shared);
-            } catch (err) { }
-            finally {
+                setSharedStories(shared);
+            } catch (err) {
+                toast.error("取得分享故事失敗");
+            } finally {
                 setStoryLoading(false);
             }
         };
@@ -182,11 +190,45 @@ export default function ProfilePage() {
 
     return (
         <>
-
             <ConfirmPasswordDialog
-                open={isDialogOpen}
-                setOpen={setIsDialogOpen}
-                onVerified={handleVerified}
+                open={confirmPurpose !== null}
+                setOpen={(open) => {
+                    if (!open) setConfirmPurpose(null);
+                }}
+                onVerified={async () => {
+                    if (confirmPurpose === 'updateProfile') {
+                        try {
+                            const { data } = await updateProfile({ email, name });
+                            toast.success(data.message || '更新成功');
+                            setUser({
+                                ...user!,
+                                name,
+                                email,
+                            });
+                        } catch (err) {
+                            toast.error('更新失敗，請稍後再試');
+                        } finally {
+                            setConfirmPurpose(null);
+                        }
+                    } else if (confirmPurpose === 'deleteAccount') {
+                        try {
+                            await deleteAccount();
+                            toast.success('帳號已標記刪除，系統將在 30 天後永久刪除');
+                            setIsLoggingOut(true);
+                            // 延遲 3 秒後登出
+                            setTimeout(() => {
+                                setUser(null);
+                                localStorage.removeItem('accessToken');
+                                localStorage.removeItem('refreshToken');
+                                window.location.href = '/';
+                            }, 3000); // 延遲 3 秒
+                        } catch (err) {
+                            toast.error('刪除帳號失敗，請稍後再試');
+                        } finally {
+                            setConfirmPurpose(null);
+                        }
+                    }
+                }}
             />
 
             <ConfirmDialog
@@ -199,42 +241,41 @@ export default function ProfilePage() {
                     setConfirmOpen(false);
                 }}
             />
-            <div className="flex flex-col items-center p-8 space-y-6 min-h-[600px] bg-muted/40">
-                <div className="flex w-full max-w-6xl shadow-lg rounded-2xl overflow-hidden bg-white dark:bg-gray-900 min-h-[500px]">
-                    {/* 左側選單 */}
-                    <div className="w-1/4 bg-gray-100 dark:bg-gray-800 p-4 space-y-4 border-r h-auto flex-shrink-0 min-h-full">
-                        <Button
-                            variant={activeTab === 'profile' ? 'default' : 'outline'}
-                            className="w-full justify-start"
-                            onClick={() => setActiveTab('profile')}
-                        >
-                            個人資料
-                        </Button>
-                        <Button
-                            variant={activeTab === 'stories' ? 'default' : 'outline'}
-                            className="w-full justify-start"
-                            onClick={() => setActiveTab('stories')}
-                        >
-                            已建立故事
-                        </Button>
-                        <Button
-                            variant={activeTab === 'shared' ? 'default' : 'outline'}
-                            className="w-full justify-start"
-                            onClick={() => setActiveTab('shared')}
-                        >
-                            已分享故事
-                        </Button>
-                        <Button
-                            variant={activeTab === 'deleted' ? 'default' : 'outline'}
-                            className="w-full justify-start"
-                            onClick={() => setActiveTab('deleted')}>
-                            已刪除故事
-                        </Button>
+            <div className="flex flex-col items-center p-4 bg-muted/40 min-h-screen pb-24">
+                <div className="flex flex-col lg:flex-row w-full max-w-6xl h-[calc(100vh-120px)] lg:h-[700px] shadow-lg rounded-2xl overflow-hidden bg-white dark:bg-gray-900">
+                    {/* 左側選單：上半按鈕 + 底部刪除帳號 */}
+                    <div className="w-full lg:w-1/4 bg-gray-100 dark:bg-gray-800 p-4 border-r flex flex-col justify-between">
+                        {/* 上半選單按鈕 */}
+                        <div className="space-y-4">
+                            <Button
+                                variant={activeTab === 'profile' ? 'default' : 'outline'}
+                                className="w-full justify-center"
+                                onClick={() => setActiveTab('profile')}
+                            >
+                                個人資料
+                            </Button>
+                            <Button
+                                variant={activeTab === 'stories' ? 'default' : 'outline'}
+                                className="w-full justify-center"
+                                onClick={() => setActiveTab('stories')}
+                            >
+                                已建立故事
+                            </Button>
+                            <Button
+                                variant={activeTab === 'shared' ? 'default' : 'outline'}
+                                className="w-full justify-center"
+                                onClick={() => setActiveTab('shared')}
+                            >
+                                已分享故事
+                            </Button>
+
+                        </div>
                     </div>
 
+
                     {/* 右側內容 */}
-                    <div className="w-3/4 p-6 overflow-y-auto max-h-[80vh]">
-                        <Card className="w-full shadow-none border-none">
+                    <div className="w-full lg:w-3/4 p-6 overflow-y-auto h-full">
+                        <Card className="w-full shadow-none border-none flex flex-col h-full">
                             <CardHeader>
                                 <CardTitle className="text-xl">
                                     {activeTab === 'profile' && '👤 個人資料'}
@@ -243,37 +284,62 @@ export default function ProfilePage() {
                                     {activeTab === 'deleted' && '🗑️ 已刪除故事'}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="mt-4 text-gray-700 dark:text-gray-300">
+                            <CardContent className="mt-4 text-gray-700 dark:text-gray-300 flex flex-col h-full">
                                 {/* 個人資料 */}
                                 {activeTab === 'profile' && (
-                                    <div className="space-y-4">
+                                    <div className="flex flex-col h-full">
                                         {loading ? (
                                             <p>載入中...</p>
                                         ) : (
                                             <>
-                                                <div>
-                                                    <label className="block mb-2">Email</label>
-                                                    <Input
-                                                        value={email}
-                                                        onChange={(e) => setEmail(e.target.value)}
-                                                        disabled={isSaving}
-                                                    />
+                                                {/* 表單欄位 */}
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <label className="block mb-2">Email</label>
+                                                        <Input value={email} onChange={(e) => setEmail(e.target.value)} disabled={isSaving} />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block mb-2">名稱</label>
+                                                        <Input value={name} onChange={(e) => setName(e.target.value)} disabled={isSaving} />
+                                                    </div>
+                                                    <Button onClick={handleUpdateClick} className="mt-4" disabled={isSaving}>
+                                                        {isSaving ? '儲存中...' : '更新資料'}
+                                                    </Button>
                                                 </div>
-                                                <div>
-                                                    <label className="block mb-2">名稱</label>
-                                                    <Input
-                                                        value={name}
-                                                        onChange={(e) => setName(e.target.value)}
-                                                        disabled={isSaving}
-                                                    />
+
+                                                {/* 資料操作區塊 */}
+                                                <div className="space-y-2 mt-auto pt-8">
+                                                    <p className="text-sm text-muted-foreground">
+                                                        ⚠️ 資料操作：查看刪除的故事或刪除整個帳號。
+                                                    </p>
+                                                    <div className="flex flex-col md:flex-row gap-4">
+                                                        {/* 已刪除故事 */}
+                                                        <Button
+                                                            variant="outline"
+                                                            className="w-full md:w-1/2 justify-center"
+                                                            onClick={() => setActiveTab('deleted')}
+                                                        >
+                                                            已刪除故事
+                                                        </Button>
+
+                                                        {/* 刪除帳號 */}
+                                                        <Button
+                                                            variant="destructive"
+                                                            className="w-full md:w-1/2 justify-center"
+                                                            onClick={() => {
+                                                                setConfirmTitle('確認刪除帳號');
+                                                                setConfirmDescription('刪除帳號後將立即登出，30 天內可復原，確定要繼續嗎？');
+                                                                setOnConfirmAction(() => () => {
+                                                                    setConfirmOpen(false);
+                                                                    setConfirmPurpose('deleteAccount');
+                                                                });
+                                                                setConfirmOpen(true);
+                                                            }}
+                                                        >
+                                                            刪除帳號
+                                                        </Button>
+                                                    </div>
                                                 </div>
-                                                <Button
-                                                    onClick={handleUpdateClick}
-                                                    className="mt-4"
-                                                    disabled={isSaving}
-                                                >
-                                                    {isSaving ? '儲存中...' : '更新資料'}
-                                                </Button>
                                             </>
                                         )}
                                     </div>
@@ -363,10 +429,10 @@ export default function ProfilePage() {
                                     <div className="space-y-4">
                                         {storyLoading ? (
                                             <p>載入中...</p>
-                                        ) : stories.length === 0 ? (
+                                        ) : sharedStories.length === 0 ? (
                                             <p>尚未分享任何故事。</p>
                                         ) : (
-                                            stories.map((story) => (
+                                            sharedStories.map((story) => (
                                                 <Card key={story.id} className="border p-4 relative">
                                                     <h3 className="font-bold">{story.title}</h3>
                                                     <p className="text-sm text-gray-500">
@@ -449,6 +515,15 @@ export default function ProfilePage() {
                     </div>
                 </div>
             </div>
+            {
+                isLoggingOut && (
+                    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                        <div className="bg-white dark:bg-gray-800 px-6 py-4 rounded-xl shadow-xl border dark:border-gray-600 text-center">
+                            ⏳ 正在登出中，請稍候...
+                        </div>
+                    </div>
+                )
+            }
         </>
     );
 }

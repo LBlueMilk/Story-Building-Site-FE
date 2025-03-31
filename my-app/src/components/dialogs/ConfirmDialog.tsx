@@ -26,12 +26,15 @@ export function ConfirmDialog({
   description: string
 }) {
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) onCancel(); // ✅ 對話框關閉時觸發 onCancel（包含點 X）
+    }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
+
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline" onClick={onCancel}>取消</Button>

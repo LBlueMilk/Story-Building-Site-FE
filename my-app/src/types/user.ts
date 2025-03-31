@@ -9,4 +9,5 @@ export interface UserType {
   createdAt?: string;
   loginProviders?: string[];
   stories?: StoryType[];
+  deleted_at?: string | null;
 }

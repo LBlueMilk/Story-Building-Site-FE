@@ -40,7 +40,7 @@ export default function RegisterDialog({ open, setOpen, openLogin }: RegisterDia
             setEmail('');
             setPassword('');
             toast.success('註冊成功 🎉 請盡早至信箱驗證帳號');
-            router.push('/');
+            router.push('/profile');
         } catch (err: any) {
             const rawMessage = err?.response?.data?.message;
             const finalMessage =

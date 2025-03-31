@@ -32,7 +32,10 @@ instance.interceptors.response.use(
     const resData = typeof error.response?.data === 'object' ? error.response.data : null;
     const message = resData?.message || resData?.error || resData?.detail || 'API 錯誤';
 
-    console.error('API Error:', message);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('API Error:', message);
+    }
+    
 
     // 分類錯誤提示
     switch (status) {
