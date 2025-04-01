@@ -1,54 +1,23 @@
-import { notFound } from 'next/navigation'
-import { getStoryById } from '@/services/story'
-import { Metadata } from 'next'
+// 這個頁面會顯示故事的畫布和時間軸功能。
+// /src/app/story/[id]/page.tsx
 
-export const metadata: Metadata = {
-  title: '故事詳細資訊',
-  description: '顯示指定故事的詳細內容與公開狀態',
+// 匯入 StoryWorkspace 元件，這是你顯示故事內容的主要畫面，包括畫布和時間軸
+import StoryWorkspace from '@/components/story/StoryWorkspace';
+
+// 這段是 Next.js App Router 的 SEO 功能：
+// 當使用者進入 /story/[id] 頁面時，會自動設定該頁面的 HTML <title> 標籤。
+// ✅ 注意：params 現在是 Promise，需要用 await 解包。
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return {
+    title: `正在載入故事 #${id}`, 
+  };
 }
 
-interface StoryPageProps {
-  params: { id: string }
-}
-
-export default async function StoryPage({ params }: StoryPageProps) {
-  const storyId = Number(params.id)
-
-  if (isNaN(storyId)) {
-    return notFound()
-  }
-
-  try {
-    const story = await getStoryById(storyId)
-
-    return (
-      <div className="max-w-3xl mx-auto py-10 px-4">
-        <h1 className="text-2xl font-bold mb-4">{story.title}</h1>
-
-        <p className="text-gray-700 whitespace-pre-line mb-6">{story.description}</p>
-
-        <div className="text-sm text-muted-foreground">
-          <p>建立時間：{new Date(story.createdAt).toLocaleString()}</p>
-          <p>{story.isPublic ? '🌍 公開故事，任何人可閱讀' : '🔒 非公開，僅限分享對象可見'}</p>
-          {story.deletedAt && (
-            <p className="text-red-500 font-medium mt-2">
-              ⚠️ 此故事已於 {new Date(story.deletedAt).toLocaleString()} 被刪除
-            </p>
-          )}
-        </div>
-
-        {story.isPublic && (
-          <div className="mt-6 p-4 border rounded bg-muted text-sm">
-            <p className="mb-1">🔗 分享連結：</p>
-            <pre className="truncate">
-              {`${process.env.NEXT_PUBLIC_BASE_URL}/story/${story.id}`}
-            </pre>
-          </div>
-        )}
-      </div>
-    )
-  } catch (error: any) {
-    console.error('❌ 無法取得故事：', error?.response?.data || error?.message || error)
-    return notFound()
-  }
+// 這是故事頁面的主入口，會根據網址中的 id 載入對應的故事內容。
+// ✅ 注意：params 也是 Promise，需要 await 解包。
+export default async function StoryPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const storyId = Number(id);
+  return <StoryWorkspace storyId={storyId} />;
 }

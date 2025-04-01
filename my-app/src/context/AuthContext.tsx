@@ -5,6 +5,7 @@ import { TokenService } from '@/services/tokenService';
 import { UserType } from '@/types/user';
 import { useRouter } from 'next/navigation';
 import { getProfile } from '@/services/auth';
+import { toast } from 'sonner';
 
 
 interface AuthContextType {
@@ -50,8 +51,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // 設定使用者（含 getProfile 呼叫，補齊 email）
   const setUser = async (user: any | null) => {
     if (user) {
+      // 已包含 email 就不重撈 API
+      if (user.email) {
+        localStorage.setItem('user', JSON.stringify(user))
+        setUserState(user)
+        return
+      }
       try {
-        const { data } = await getProfile();
+        const { data } = await getProfile()
         const formattedUser: UserType = {
           id: data.id,
           name: data.name,
@@ -61,24 +68,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           createdAt: data.createdAt,
           loginProviders: data.loginProviders,
           stories: user.stories || [],
-        };
-        localStorage.setItem('user', JSON.stringify(formattedUser));
-        setUserState(formattedUser);
+        }
+        localStorage.setItem('user', JSON.stringify(formattedUser))
+        setUserState(formattedUser)
       } catch (error) {
-        console.error('❌ 載入使用者資料失敗', error);
-        // fallback，至少保住登入狀態
+        console.error('❌ 載入使用者資料失敗', error)
         const fallbackUser: UserType = {
-          id: -1, //未知使用者
+          id: -1,
           name: user.name || '',
           email: '',
           stories: user.stories || [],
-        };
-        localStorage.setItem('user', JSON.stringify(fallbackUser));
-        setUserState(fallbackUser);
+        }
+        localStorage.setItem('user', JSON.stringify(fallbackUser))
+        setUserState(fallbackUser)
       }
     } else {
-      localStorage.removeItem('user');
-      setUserState(null);
+      localStorage.removeItem('user')
+      setUserState(null)
     }
   };
 
@@ -87,6 +93,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setTokenState(null);
     setUserState(null);
     localStorage.removeItem('user');
+    toast.success('已成功登出');
     router.push('/');
   };
 

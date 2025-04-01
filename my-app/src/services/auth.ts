@@ -1,11 +1,7 @@
 import api from './api';
 import { StoryResponse } from '@/types/story';
 import { UserType } from '@/types/user'; 
-
-interface StoryType {
-  id: number;
-  title: string;
-}
+import Cookies from 'js-cookie'
 
 // 已刪除的故事
 export interface DeletedStoryResponse {
@@ -15,6 +11,13 @@ export interface DeletedStoryResponse {
   isPublic: boolean;
   createdAt: string;
   deletedAt: string | null; // Only for deleted
+}
+
+export function logout(): void {
+  Cookies.remove('accessToken');
+  Cookies.remove('refreshToken');
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('user');
 }
 
 interface LoginResponse {
@@ -59,9 +62,22 @@ interface GetProfileResponse {
   loginProviders: string[];
 }
 
+interface LoginResult {
+  accessToken: string
+  refreshToken: string
+  user: UserType
+}
+
 // 登入 API
-export const login = (data: LoginRequest) =>
-  api.post<LoginResponse>('/auth/login', data);
+export const login = async (data: LoginRequest): Promise<LoginResult> => {
+  const res = await api.post<LoginResult>('/auth/login', data)
+  const { accessToken, refreshToken, user } = res.data
+
+  Cookies.set('accessToken', accessToken, { path: '/', sameSite: 'strict' })
+  Cookies.set('refreshToken', refreshToken, { path: '/', sameSite: 'strict' })
+
+  return { accessToken, refreshToken, user }
+}
 
 // 註冊 API
 export const register = (data: RegisterRequest) =>

@@ -52,25 +52,22 @@ export default function LoginDialog({ open, setOpen, openRegister }: LoginDialog
         setLoading(true);
 
         try {
-            const response = await login({
+            // 解構完整登入資訊
+            const { accessToken, refreshToken, user } = await login({
                 email: email.trim().toLowerCase(),
-                password: password,
+                password,
             });
 
-            const { accessToken, refreshToken, user } = response.data;
-
-            // 若帳號已刪除，暫存資料，等待用戶確認
+            // 若帳號已刪除，提示還原
             if (user.deleted_at) {
                 setPendingUser(user);
                 setPendingToken(accessToken);
                 setShowRestoreDialog(true);
                 return;
             }
-            // 儲存 Token
+
             TokenService.setTokens(accessToken, refreshToken);
-            // 設定 Token
             setToken(accessToken);
-            // 設定使用者資料
             setUser(user);
 
             // 記住信箱
@@ -87,7 +84,6 @@ export default function LoginDialog({ open, setOpen, openRegister }: LoginDialog
             }
             setPassword('');
 
-            setPassword('');
             toast.success('登入成功');
             router.push('/profile');
         } catch (err: any) {
@@ -216,12 +212,12 @@ export default function LoginDialog({ open, setOpen, openRegister }: LoginDialog
                     }
                     try {
                         toast.loading('正在恢復帳號...', { id: 'restore-loading' });
-                        
+
                         TokenService.setTokens(pendingToken, ''); // 若無 refreshToken 可給空字串
                         setToken(pendingToken);
 
                         await restoreAccount();
-                        
+
                         setUser(pendingUser);
 
                         toast.dismiss('restore-loading');
