@@ -242,40 +242,35 @@ export default function ProfilePage() {
                 }}
             />
             <div className="flex flex-col items-center p-4 bg-muted/40 min-h-screen pb-24">
-                <div className="flex flex-col lg:flex-row w-full max-w-6xl h-[calc(100vh-120px)] lg:h-[700px] shadow-lg rounded-2xl overflow-hidden bg-white dark:bg-gray-900">
-                    {/* 左側選單：上半按鈕 + 底部刪除帳號 */}
-                    <div className="w-full lg:w-1/4 bg-gray-100 dark:bg-gray-800 p-4 border-r flex flex-col justify-between">
-                        {/* 上半選單按鈕 */}
-                        <div className="space-y-4">
-                            <Button
-                                variant={activeTab === 'profile' ? 'default' : 'outline'}
-                                className="w-full justify-center"
-                                onClick={() => setActiveTab('profile')}
-                            >
-                                個人資料
-                            </Button>
-                            <Button
-                                variant={activeTab === 'stories' ? 'default' : 'outline'}
-                                className="w-full justify-center"
-                                onClick={() => setActiveTab('stories')}
-                            >
-                                已建立故事
-                            </Button>
-                            <Button
-                                variant={activeTab === 'shared' ? 'default' : 'outline'}
-                                className="w-full justify-center"
-                                onClick={() => setActiveTab('shared')}
-                            >
-                                已分享故事
-                            </Button>
-
+                <div className="flex flex-col w-full max-w-6xl min-h-[700px] shadow-lg rounded-2xl overflow-hidden bg-white dark:bg-gray-900">
+                    {/* 上側選單 */}
+                    <div className="w-full bg-gray-100 dark:bg-gray-800 border-b">
+                        <div className="flex w-full rounded-t-2xl overflow-hidden border-x border-t border-border text-sm font-medium divide-x divide-border">
+                            {[
+                                { key: 'profile', label: '個人資料' },
+                                { key: 'stories', label: '已建立故事' },
+                                { key: 'shared', label: '已分享故事' },
+                            ].map(({ key, label }) => (
+                                <Button
+                                    key={key}
+                                    variant="ghost"
+                                    onClick={() => setActiveTab(key as any)}
+                                    className={`flex-1 rounded-none py-2
+                                        ${activeTab === key
+                                            ? 'bg-primary text-white'
+                                            : 'bg-background text-muted-foreground hover:bg-muted'}
+                                      `}
+                                >
+                                    {label}
+                                </Button>
+                            ))}
                         </div>
                     </div>
 
 
-                    {/* 右側內容 */}
-                    <div className="w-full lg:w-3/4 p-6 overflow-y-auto h-full">
-                        <Card className="w-full shadow-none border-none flex flex-col h-full">
+                    {/* 下側內容 */}
+                    <div className="w-full max-w-6xl p-6 flex flex-col flex-grow mx-auto">
+                        <Card className="w-full shadow-none border-none flex flex-col flex-grow">
                             <CardHeader>
                                 <CardTitle className="text-xl">
                                     {activeTab === 'profile' && '👤 個人資料'}
@@ -284,10 +279,10 @@ export default function ProfilePage() {
                                     {activeTab === 'deleted' && '🗑️ 已刪除故事'}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="mt-4 text-gray-700 dark:text-gray-300 flex flex-col h-full">
+                            <CardContent className="mt-4 text-gray-700 dark:text-gray-300 flex flex-col flex-grow">
                                 {/* 個人資料 */}
                                 {activeTab === 'profile' && (
-                                    <div className="flex flex-col h-full">
+                                    <div className="flex flex-col flex-grow">
                                         {loading ? (
                                             <p>載入中...</p>
                                         ) : (
@@ -307,10 +302,13 @@ export default function ProfilePage() {
                                                     </Button>
                                                 </div>
 
+                                                {/* 新增此區塊強制佔滿中間空間，讓按鈕下壓 */}
+                                                <div className="flex-grow" />
+
                                                 {/* 資料操作區塊 */}
-                                                <div className="space-y-2 mt-auto pt-8">
+                                                <div className="space-y-2  pt-8">
                                                     <p className="text-sm text-muted-foreground">
-                                                        ⚠️ 資料操作：查看刪除的故事或刪除整個帳號。
+                                                        ⚠️ 資料操作：刪除後資料將在 30 天後永久刪除。
                                                     </p>
                                                     <div className="flex flex-col md:flex-row gap-4">
                                                         {/* 已刪除故事 */}
