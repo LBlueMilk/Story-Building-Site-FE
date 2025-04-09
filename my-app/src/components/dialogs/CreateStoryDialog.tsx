@@ -27,6 +27,7 @@ export default function CreateStoryDialog({ open, setOpen }: CreateStoryDialogPr
   const [loading, setLoading] = useState(false);
   const { user, setUser } = useAuth();
   const { fetchStories } = useStory();
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const handleCreateStory = async () => {
     if (title.trim() === "") {

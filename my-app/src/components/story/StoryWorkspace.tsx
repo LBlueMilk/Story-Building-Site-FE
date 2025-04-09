@@ -8,7 +8,7 @@ import TimelinePanel from './TimelinePanel';
 import CharacterSidebar from './CharacterSidebar';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext'; 
+import { useAuth } from '@/context/AuthContext';
 import { getStoryByIdClient } from '@/services/story.client';
 
 interface Props {
@@ -36,9 +36,10 @@ export default function StoryWorkspace({ storyId }: Props) {
 
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)]">
-            <div className="flex-1 flex overflow-hidden">
-                <div className="flex-1 overflow-hidden relative">
-                    <CanvasBoard />
+            {/* 上方內容（畫布 + 角色側欄） */}
+            <div className="flex flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-auto relative">
+                    <CanvasBoard storyId={storyId} />
                     <Button
                         variant="ghost"
                         size="icon"
@@ -48,10 +49,18 @@ export default function StoryWorkspace({ storyId }: Props) {
                         {isSidebarOpen ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
                     </Button>
                 </div>
-                {isSidebarOpen && <CharacterSidebar />}
+                {isSidebarOpen && (
+                    <div className="w-[300px] border-l overflow-auto">
+                        <CharacterSidebar storyId={storyId} />
+                    </div>
+                )}
             </div>
+
+            {/* 分隔線 */}
             <Separator className="my-1" />
-            <div className="h-[25%] border-t">
+
+            {/* 下方時間軸 */}
+            <div className="h-[25%] border-t overflow-auto">
                 <TimelinePanel />
             </div>
         </div>
