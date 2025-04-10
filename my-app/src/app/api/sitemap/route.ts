@@ -1,22 +1,25 @@
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
 
 export async function GET() {
   try {
-    // 查詢公開的故事資料
-    const result = await pool.query(
-      'SELECT public_id, updated_at FROM stories WHERE is_public = true'
-    );
+    // 呼叫 ASP.NET Core 提供的公開故事 API
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + '/api/story/public';
+
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      throw new Error('無法取得資料');
+    }
+
+    const result = await response.json();
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://你的網站網址';
 
-    // 組成 XML
-    const urls = result.rows
-      .map((story: { public_id: string; updated_at: Date }) => {
-        const lastmod = story.updated_at.toISOString().split('T')[0];
+    const urls = result
+      .map((story: { publicId: string; updatedAt: string }) => {
+        const lastmod = story.updatedAt.split('T')[0];
         return `
           <url>
-            <loc>${baseUrl}/story/${story.public_id}</loc>
+            <loc>${baseUrl}/story/${story.publicId}</loc>
             <lastmod>${lastmod}</lastmod>
           </url>
         `;

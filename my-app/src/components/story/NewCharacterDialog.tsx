@@ -34,7 +34,7 @@ export default function NewCharacterDialog({ onSubmit }: Props) {
         </DialogHeader>
         <div className="space-y-4">
           <Input placeholder="角色名稱" value={name} onChange={(e) => setName(e.target.value)} />
-          <Textarea placeholder="角色簡介" value={desc} onChange={(e) => setDesc(e.target.value)} />
+          <Textarea placeholder="輸入角色描述，可包含幾百字背景故事" value={desc} onChange={(e) => setDesc(e.target.value)} />
         </div>
         <DialogFooter className="mt-4">
           <Button onClick={handleCreate}>新增</Button>

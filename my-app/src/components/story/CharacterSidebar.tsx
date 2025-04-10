@@ -78,8 +78,8 @@ export default function CharacterSidebar({ storyId }: Props) {
 
 
     return (
-        <div className="w-full p-4 bg-slate-50 border-l h-full overflow-y-auto">
-            <h2 className="font-semibold text-lg mb-2">角色列表</h2>
+        <div className="w-full p-4 bg-slate-50 border-l h-full overflow-y-scroll scrollbar-thin">
+            <h2 className="font-semibold text-lg mb-2 text-center">角色列表</h2>
             <NewCharacterDialog onSubmit={handleAddCharacter} />
 
             {loading && <p className="text-sm text-gray-400">載入中...</p>}
@@ -88,40 +88,57 @@ export default function CharacterSidebar({ storyId }: Props) {
             )}
             <ul className="space-y-4 mt-4">
                 {characters.map((char, index) => (
-                    <li key={index} className="p-2 bg-white rounded shadow text-sm">
-                        {/* 標題列可點擊展開屬性 */}
+                    <li
+                        key={index}
+                        className="p-3 bg-white rounded-xl shadow hover:shadow-md transition-shadow duration-300 relative group"
+                    >
+                        {/* 頭部 - 顯示角色名稱與展開按鈕 */}
                         <div
-                            className="flex justify-between items-center cursor-pointer mb-2"
+                            className="flex justify-between items-center mb-1 cursor-pointer"
                             onClick={() => setSelectedIndex(selectedIndex === index ? null : index)}
                         >
-                            <div className="font-bold text-gray-900">
+                            <div className="font-bold text-gray-900 truncate max-w-[70%]">
                                 {char.name || '未命名角色'}
                             </div>
-                            <div className="text-gray-400 text-xs">點擊展開屬性</div>
+                            <div className="flex items-center space-x-1 text-gray-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                <span>展開屬性</span>
+                                <span>✏️</span>
+                            </div>
                         </div>
 
-                        {/* 姓名與描述欄位可編輯，但不會觸發 onClick */}
-                        <input
-                            className="font-bold text-lg mb-1 bg-white border border-gray-300 rounded px-2 py-1 outline-none w-full"
-                            value={char.name}
-                            placeholder="輸入角色名稱"
-                            onChange={(e) => handleMetaChange(index, 'name', e.target.value)}
-                        />
-                        <input
-                            className="text-sm text-gray-600 bg-white border border-gray-300 rounded px-2 py-1 outline-none w-full"
-                            value={char.desc}
-                            placeholder="輸入角色描述"
-                            onChange={(e) => handleMetaChange(index, 'desc', e.target.value)}
-                        />
+                        {/* 展開區塊 */}
+                        <div
+                            className={`transition-all duration-300 ease-in-out overflow-hidden ${selectedIndex === index ? 'max-h-[800px] mt-2 opacity-100' : 'max-h-0 opacity-0'
+                                }`}
+                        >
+                            {selectedIndex === index && (
+                                <div className="space-y-3">
+                                    {/* 雙欄排版：角色名稱 + 屬性 */}
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <input
+                                            className="bg-white border border-gray-300 rounded px-2 py-1 outline-none text-sm"
+                                            value={char.name}
+                                            placeholder="角色名稱"
+                                            onChange={(e) => handleMetaChange(index, 'name', e.target.value)}
+                                        />
+                                    </div>
 
-                        {selectedIndex === index && (
-                            <div className="mt-2">
-                                <AttributeEditor
-                                    attributes={char.attributes}
-                                    onChange={(newAttrs) => handleAttrChange(index, newAttrs)}
-                                />
-                            </div>
-                        )}
+                                    {/* 描述欄位：支援多行輸入 */}
+                                    <textarea
+                                        className="w-full h-24 resize-y border border-gray-300 rounded px-2 py-1 outline-none text-sm leading-relaxed"
+                                        placeholder="輸入角色描述，可包含幾百字背景故事"
+                                        value={char.desc}
+                                        onChange={(e) => handleMetaChange(index, 'desc', e.target.value)}
+                                    />
+
+                                    {/* 屬性編輯器 */}
+                                    <AttributeEditor
+                                        attributes={char.attributes}
+                                        onChange={(newAttrs) => handleAttrChange(index, newAttrs)}
+                                    />
+                                </div>
+                            )}
+                        </div>
                     </li>
                 ))}
             </ul>
