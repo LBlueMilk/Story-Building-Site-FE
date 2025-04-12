@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getCanvas, saveCanvas } from '@/services/canvas.client';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
+type Tool = 'pen' | 'eraser';
 
 interface Props {
     storyId: number;
@@ -13,6 +14,7 @@ interface Stroke {
     points: { x: number; y: number }[];
     color: string;
     width: number;
+    tool: 'pen' | 'eraser';
 }
 
 export default function CanvasBoard({ storyId }: Props) {
@@ -28,9 +30,13 @@ export default function CanvasBoard({ storyId }: Props) {
     const [scale, setScale] = useState(1);
 
     const color = '#000000';
-    const lineWidth = 2;
     const canvasWidth = 1920;
     const canvasHeight = 1080;
+
+    const [tool, setTool] = useState<Tool>('pen');
+    const [brushWidth, setBrushWidth] = useState(2);
+    const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
+
 
     // 偵測容器寬度，自動調整縮放
     useEffect(() => {
@@ -81,7 +87,13 @@ export default function CanvasBoard({ storyId }: Props) {
 
         (canvasData.strokes || []).forEach((stroke: Stroke) => {
             if (stroke.points.length < 2) return;
-            ctx.strokeStyle = stroke.color;
+            if (stroke.tool === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
+            } else {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.strokeStyle = stroke.color;
+            }
             ctx.lineWidth = stroke.width;
             ctx.beginPath();
             ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
@@ -105,11 +117,15 @@ export default function CanvasBoard({ storyId }: Props) {
         setCurrentStroke({
             points: [{ x, y }],
             color,
-            width: lineWidth,
+            width: brushWidth,
+            tool: tool,
         });
     };
 
     const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+        // 避免在畫布外移動時觸發
+        setMousePos(getMousePos(e));
+
         if (!isDrawing || !currentStroke || !canvasRef.current) return;
         const { x, y } = getMousePos(e);
         const updatedStroke = {
@@ -120,7 +136,13 @@ export default function CanvasBoard({ storyId }: Props) {
 
         const ctx = canvasRef.current.getContext('2d');
         if (ctx) {
-            ctx.strokeStyle = updatedStroke.color;
+            if (tool === 'pen') {
+                ctx.globalCompositeOperation = 'source-over'; // 正常畫筆
+                ctx.strokeStyle = updatedStroke.color;
+            } else if (tool === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out'; // 擦除效果
+                ctx.strokeStyle = 'rgba(0,0,0,1)'; // 可配合透明
+            }
             ctx.lineWidth = updatedStroke.width;
             ctx.beginPath();
             const pts = updatedStroke.points;
@@ -160,13 +182,73 @@ export default function CanvasBoard({ storyId }: Props) {
         }
     };
 
+    // 清除畫布
+    const handleClearCanvas = () => {
+        const confirmClear = window.confirm('⚠️ 確定要清除整個畫布內容嗎？此操作無法還原。');
+        if (!confirmClear) return;
+
+        setCanvasData((prev: any) => ({
+            ...prev,
+            strokes: [],
+        }));
+
+        const ctx = canvasRef.current?.getContext('2d');
+        if (ctx) {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        }
+    };
+
+
     return (
         <div className="w-full h-[calc(100vh-100px)] flex flex-col overflow-hidden" ref={containerRef}>
-            <div className="flex items-center justify-between p-2 border-b bg-white z-10">
-                <span className="text-sm text-gray-500">🕒 最後修改：{lastModified || '無'}</span>
-                <Button onClick={handleSave} disabled={loading}>
-                    {loading ? '儲存中...' : '儲存畫布'}
-                </Button>
+            <div className="flex items-center justify-between p-2 border-b bg-white z-10 gap-4">
+                {/* 左側：最後修改 */}
+                <div className="text-sm text-gray-500 whitespace-nowrap">
+                    🕒 最後修改：{lastModified || '無'}
+                </div>
+
+                {/* 中間：筆刷選擇 + 工具 + 清空 */}
+                <div className="flex items-center gap-2 flex-wrap">
+                    {tool === 'pen' || tool === 'eraser' ? (
+                        <div className="flex items-center gap-2">
+                            <label className="text-sm text-gray-600 whitespace-nowrap">
+                                {tool === 'pen' ? '畫筆粗細' : '橡皮擦大小'}：
+                            </label>
+                            <input
+                                type="range"
+                                min={1}
+                                max={50}
+                                value={brushWidth}
+                                onChange={(e) => setBrushWidth(Number(e.target.value))}
+                            />
+                            <span className="text-sm w-[32px] text-center">{brushWidth}</span>
+                        </div>
+                    ) : null}
+
+                    <Button
+                        variant={tool === 'pen' ? 'default' : 'outline'}
+                        onClick={() => setTool('pen')}
+                    >
+                        ✏️ 畫筆
+                    </Button>
+                    <Button
+                        variant={tool === 'eraser' ? 'default' : 'outline'}
+                        onClick={() => setTool('eraser')}
+                    >
+                        🧽 橡皮擦
+                    </Button>
+
+                    <Button variant="destructive" onClick={handleClearCanvas}>
+                        清空畫布
+                    </Button>
+                </div>
+
+                {/* 右側：儲存 */}
+                <div>
+                    <Button onClick={handleSave} disabled={loading}>
+                        {loading ? '儲存中...' : '儲存畫布'}
+                    </Button>
+                </div>
             </div>
 
             <div className="flex-1 bg-[#f9f9f9] relative">
@@ -189,8 +271,26 @@ export default function CanvasBoard({ storyId }: Props) {
                         onMouseDown={handleMouseDown}
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
-                        onMouseLeave={handleMouseUp}
+                        onMouseLeave={(e) => {
+                            handleMouseUp();
+                            setMousePos(null);
+                        }}
                     />
+                    {mousePos && (
+                        <div
+                            style={{
+                                position: 'absolute',
+                                top: mousePos.y - brushWidth / 2,
+                                left: mousePos.x - brushWidth / 2,
+                                width: brushWidth,
+                                height: brushWidth,
+                                borderRadius: '50%',
+                                border: tool === 'eraser' ? '2px dashed #888' : '1px solid #333',
+                                backgroundColor: tool === 'eraser' ? 'transparent' : 'rgba(0,0,0,0.1)',
+                                pointerEvents: 'none',
+                            }}
+                        />
+                    )}
                 </div>
             </div>
         </div>
