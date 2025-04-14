@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -11,15 +11,23 @@ interface Props {
 
 export default function AttributeEditor({ attributes, onChange }: Props) {
     const [localAttrs, setLocalAttrs] = useState<[string, string][]>([]);
+    const isFirstRender = useRef(true);
 
     useEffect(() => {
         setLocalAttrs(Object.entries(attributes));
     }, []);
 
     useEffect(() => {
-        const obj = Object.fromEntries(localAttrs.filter(([key]) => key.trim() !== ''));
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        const obj = Object.fromEntries(
+            localAttrs.filter(([key]) => key.trim() !== '')
+        );
         onChange(obj);
-    }, [localAttrs]);    
+    }, [localAttrs]);
 
     const updateAndNotify = (updated: [string, string][]) => {
         setLocalAttrs(updated);
@@ -45,7 +53,7 @@ export default function AttributeEditor({ attributes, onChange }: Props) {
 
     const handleAdd = () => {
         const updated = [...localAttrs, ['', ''] as [string, string]];
-        updateAndNotify(updated); 
+        updateAndNotify(updated);
     };
 
     return (

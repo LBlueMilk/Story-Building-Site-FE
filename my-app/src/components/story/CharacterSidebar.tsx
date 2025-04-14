@@ -1,11 +1,12 @@
 // /src/components/story/CharacterSidebar.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { getCharacters, saveCharacters } from '@/services/character.client';
 import { useAuth } from '@/context/AuthContext';
 import NewCharacterDialog from './NewCharacterDialog';
 import AttributeEditor from './AttributeEditor';
+import { toastSuccess, toastError } from '@/lib/toastUtils';
 
 interface Props {
     storyId: number;
@@ -16,33 +17,45 @@ export default function CharacterSidebar({ storyId }: Props) {
     const [characters, setCharacters] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-    const [initialized, setInitialized] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const cache = useRef<{ [storyId: number]: any[] }>({});
 
-    const handleAttrChange = async (index: number, newAttrs: Record<string, string>) => {
-        const updated = characters.map((char, i) =>
-            i === index ? { ...char, attributes: newAttrs } : char
+    const handleAttrChange = async (
+        index: number,
+        newAttrs: Record<string, string>
+    ) => {
+        const currentAttrs = characters[index]?.attributes ?? {};
+        const cleanedAttrs = Object.fromEntries(
+            Object.entries(newAttrs).filter(([k]) => k.trim() !== '')
         );
+
+        const hasChanged =
+            JSON.stringify(cleanedAttrs) !== JSON.stringify(currentAttrs) &&
+            Object.keys(cleanedAttrs).length > 0;
+
+        if (!hasChanged) {
+            console.log('🛑 屬性無變更或為空，跳過儲存');
+            return;
+        }
+
+        const updated = characters.map((char, i) =>
+            i === index ? { ...char, attributes: cleanedAttrs } : char
+        );
+
         setCharacters(updated);
+        setIsSaving(true);
 
         try {
             const res = await saveCharacters(storyId, { characters: updated });
-            console.log('✅ 屬性即時儲存成功', res.message);
+            console.log('✅ 屬性儲存成功', res.message);
+            toastSuccess('儲存成功', '角色屬性已更新');
         } catch (err) {
             console.error('❌ 屬性儲存失敗', err);
+            toastError('儲存失敗', '請稍後再試');
+        } finally {
+            setIsSaving(false);
         }
     };
-
-    useEffect(() => {
-        if (!token || !storyId) return;
-
-        setLoading(true);
-        getCharacters(storyId)
-            .then((res) => {
-                setCharacters(res?.characters || []);
-            })
-            .catch((err) => console.error('❌ 載入角色失敗', err))
-            .finally(() => setLoading(false));
-    }, [token, storyId]);
 
     const handleAddCharacter = async (name: string, desc: string) => {
         const newChar = {
@@ -57,12 +70,18 @@ export default function CharacterSidebar({ storyId }: Props) {
         try {
             const res = await saveCharacters(storyId, { characters: newList });
             console.log('✅ 角色儲存成功', res.message);
+            toastSuccess('新增成功', `已新增角色「${name}」`);
         } catch (err) {
             console.error('❌ 儲存角色失敗', err);
+            toastError('新增角色失敗', '請稍後再試');
         }
     };
 
-    const handleMetaChange = async (index: number, field: 'name' | 'desc', value: string) => {
+    const handleMetaChange = async (
+        index: number,
+        field: 'name' | 'desc',
+        value: string
+    ) => {
         const updated = characters.map((char, i) =>
             i === index ? { ...char, [field]: value } : char
         );
@@ -73,8 +92,23 @@ export default function CharacterSidebar({ storyId }: Props) {
             console.log(`✅ ${field} 即時儲存成功`, res.message);
         } catch (err) {
             console.error(`❌ ${field} 儲存失敗`, err);
+            toastError(`${field} 儲存失敗`, '請稍後再試');
         }
     };
+
+
+    useEffect(() => {
+        if (!token || !storyId) return;
+
+        setLoading(true);
+        getCharacters(storyId)
+            .then((res) => {
+                console.log('📥 取得角色資料（從後端）：', res.characters);
+                setCharacters(res?.characters || []);
+            })
+            .catch((err) => console.error('❌ 載入角色失敗', err))
+            .finally(() => setLoading(false));
+    }, [token, storyId]);
 
 
     return (
@@ -136,6 +170,11 @@ export default function CharacterSidebar({ storyId }: Props) {
                                         attributes={char.attributes}
                                         onChange={(newAttrs) => handleAttrChange(index, newAttrs)}
                                     />
+                                    {isSaving && (
+                                        <p className="text-xs text-gray-400 animate-pulse px-1 pt-1">
+                                            🕒 正在儲存...
+                                        </p>
+                                    )}
                                 </div>
                             )}
                         </div>

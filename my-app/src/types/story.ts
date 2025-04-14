@@ -25,3 +25,33 @@ export interface StoryResponse {
   creatorEmail: string;         // 建立者 Email（顯示用）
   sharedUsers?: SharedUser[];   // 被分享對象清單（僅擁有者可見）
 }
+
+// --- 時間軸事件資料 ---
+export interface TimelineEvent {
+  year: number;
+  month: number;
+  day: number;
+  eraName: string;
+  title: string;
+  content: string;
+  tags?: string[];
+}
+
+// --- 年號區間資料 ---
+export interface TimelineEra {
+  name: string;
+  start: {
+    year: number;
+    month: number;
+  };
+  end: {
+    year: number;
+    month: number;
+  };
+}
+
+// --- 整體時間軸資料（後端 json 結構）---
+export interface TimelineJson {
+  events: TimelineEvent[];
+  eras: TimelineEra[];
+}

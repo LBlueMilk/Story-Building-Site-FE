@@ -25,17 +25,17 @@ export default function StoryWorkspace({ storyId }: Props) {
     // 是否開啟角色側欄
     const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
         if (typeof window !== 'undefined') {
-          return localStorage.getItem('character_sidebar_open') === 'true';
+            return localStorage.getItem('character_sidebar_open') === 'true';
         }
         return false;
-      });
+    });
     const isMobile = useMediaQuery('(max-width: 768px)');
     const sidebarRef = useRef<HTMLDivElement | null>(null);
 
     // 設定側欄開啟狀態
     useEffect(() => {
         localStorage.setItem('character_sidebar_open', isSidebarOpen.toString());
-      }, [isSidebarOpen]);
+    }, [isSidebarOpen]);
 
     // 取得故事資料
     useEffect(() => {
@@ -100,7 +100,7 @@ export default function StoryWorkspace({ storyId }: Props) {
 
             {/* 下方時間軸 */}
             <div className="h-[25%] border-t overflow-auto">
-                <TimelinePanel />
+                <TimelinePanel storyId={storyId} />
             </div>
 
             {/* 浮動按鈕 */}
