@@ -28,9 +28,10 @@ export interface StoryResponse {
 
 // --- 時間軸事件資料 ---
 export interface TimelineEvent {
+  id: string;
   year: number;
-  month: number;
-  day: number;
+  month: string;
+  day: string;
   eraName: string;
   title: string;
   content: string;
