@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from 'react';
-import { Separator } from '@/components/ui/separator';
+
 import CanvasBoard from './CanvasBoard';
 import TimelinePanel from './TimelinePanel';
 import CharacterSidebar from './CharacterSidebar';
@@ -11,6 +11,8 @@ import { ChevronLeft } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getStoryByIdClient } from '@/services/story.client';
 import { useMediaQuery } from 'usehooks-ts';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, } from "@/components/ui/tooltip";
+
 
 
 interface Props {
@@ -119,7 +121,18 @@ export default function StoryWorkspace({ storyId }: Props) {
             <div className="border-b bg-background px-6 py-3">
                 <h1 className="text-xl font-bold text-foreground truncate">{story.title || '未命名故事'}</h1>
                 {story.description && (
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{story.description}</p>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <p className="text-sm text-muted-foreground mt-1 truncate cursor-default">
+                                    {story.description}
+                                </p>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-[90vw] sm:max-w-[600px] max-h-[500px] overflow-auto break-words text-base leading-relaxed tracking-wide p-4 rounded-lg">
+                                {story.description}
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 )}
             </div>
 
@@ -162,7 +175,7 @@ export default function StoryWorkspace({ storyId }: Props) {
                             setIsPinned(next);
                             localStorage.setItem('is_pinned', String(next));
                         }}
-                    >{isPinned ? '📌 已釘選' : '📍 解開'}</Button>
+                    >{isPinned ? '📌 已釘選' : '📍 解開中'}</Button>
                 </div>
             </div>
 

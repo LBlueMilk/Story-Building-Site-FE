@@ -27,6 +27,7 @@ interface TimelinePanelProps {
 }
 
 export default function TimelinePanel({ storyId }: TimelinePanelProps) {
+    const defaultYears = [1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000];
     const [timeline, setTimeline] = useState<TimelineJson | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -46,14 +47,50 @@ export default function TimelinePanel({ storyId }: TimelinePanelProps) {
     const [editingEra, setEditingEra] = useState(newEra);
     const [editingEraDialogOpen, setEditingEraDialogOpen] = useState(false);
 
+    const [customYears, setCustomYears] = useState<number[]>(defaultYears);
+    const [editYearsOpen, setEditYearsOpen] = useState(false);
+
+    const attachYears = (updated: TimelineJson): TimelineJson => {
+        return {
+            ...updated,
+            customYears: [...customYears],
+        };
+    };
+
 
     useEffect(() => {
         const fetchTimeline = async () => {
             try {
                 const data = await getTimelineByStoryId(storyId);
-                setTimeline(data.json);
-            } catch {
-                setError('載入時間軸失敗');
+                console.log('載入 timeline json:', data.json);
+
+                if (!data || !data.json) {
+                    const initialTimeline: TimelineJson = {
+                        events: [],
+                        eras: [],
+                        customYears: defaultYears,
+                    };
+                    try {
+                        await saveTimelineByStoryId(storyId, initialTimeline);
+                    } catch {
+                        console.warn('初次儲存 timeline 時失敗');
+                    }
+                    setTimeline(initialTimeline);
+                    setCustomYears(defaultYears);
+                }
+
+                else {
+                    setTimeline(data.json);
+                    setCustomYears(data.json.customYears ?? defaultYears); // 讀入自訂年
+                }
+            } catch (err) {
+                console.error('載入時間軸失敗', err);
+                if ((err as any).response?.status === 404) {
+                    setTimeline({ events: [], eras: [], customYears: defaultYears });
+                    setCustomYears(defaultYears);
+                } else {
+                    setError('載入時間軸失敗');
+                }
             } finally {
                 setLoading(false);
             }
@@ -61,15 +98,13 @@ export default function TimelinePanel({ storyId }: TimelinePanelProps) {
         fetchTimeline();
     }, [storyId]);
 
+
     const MIN_YEAR = 1000;
     const MAX_YEAR = 2000;
-    const TOTAL_SEGMENTS = 10;
-    const segmentWidth = (MAX_YEAR - MIN_YEAR) / TOTAL_SEGMENTS;
-    const years = Array.from({ length: TOTAL_SEGMENTS + 1 }, (_, i) => Math.round(MIN_YEAR + i * segmentWidth));
 
     const handleAddEvent = async () => {
         if (!timeline || popoverYear === null) return;
-        const updated: TimelineJson = {
+        const updated: TimelineJson = attachYears({
             ...timeline,
             events: [...timeline.events, {
                 id: uuidv4(),
@@ -79,16 +114,17 @@ export default function TimelinePanel({ storyId }: TimelinePanelProps) {
                 title: newEvent.title,
                 content: newEvent.content,
                 eraName: newEvent.eraName,
-                tags: [],
+                tags: newEvent.tags,
             }],
-        };
+        });
         setSaving(true);
         try {
             await saveTimelineByStoryId(storyId, updated);
             setTimeline(updated);
             toast.success('事件已儲存');
-        } catch {
-            toast.error('儲存失敗');
+        } catch (err: any) {
+            const message = err?.response?.data?.message ?? err?.message ?? '未知錯誤';
+            toast.error(`儲存失敗：${message}`);
         } finally {
             setSaving(false);
             setPopoverYear(null);
@@ -125,13 +161,13 @@ export default function TimelinePanel({ storyId }: TimelinePanelProps) {
         const newEraObj = {
             name: newEra.name,
             start: { year: startY, month: startM },
-            end: { year: endY, month: endM }
+            end: { year: endY, month: endM },
         };
 
-        const updated: TimelineJson = {
+        const updated = attachYears({
             ...timeline,
             eras: [...(timeline.eras || []), newEraObj],
-        };
+        });
 
         setSaving(true);
         try {
@@ -140,8 +176,9 @@ export default function TimelinePanel({ storyId }: TimelinePanelProps) {
             toast.success('年號區段已新增');
             setEraDialogOpen(false);
             setNewEra({ name: '', startYear: '', startMonth: '', endYear: '', endMonth: '' });
-        } catch {
-            toast.error('新增失敗');
+        } catch (err: any) {
+            const message = err?.response?.data?.message ?? err?.message ?? '未知錯誤';
+            toast.error(`新增失敗：${message}`);
         } finally {
             setSaving(false);
         }
@@ -149,17 +186,18 @@ export default function TimelinePanel({ storyId }: TimelinePanelProps) {
 
     const handleSaveEdit = async () => {
         if (!timeline || !editingEventId || !editedEvent) return;
-        const updatedEvents = timeline.events.map(e =>
-            e.id === editingEventId ? editedEvent : e
-        );
-        const updated: TimelineJson = { ...timeline, events: updatedEvents };
+        const updated = attachYears({
+            ...timeline,
+            events: timeline.events.map(e => e.id === editingEventId ? editedEvent : e)
+        });
         setSaving(true);
         try {
             await saveTimelineByStoryId(storyId, updated);
             setTimeline(updated);
             toast.success('事件已更新');
-        } catch {
-            toast.error('更新失敗');
+        } catch (err: any) {
+            const message = err?.response?.data?.message ?? err?.message ?? '未知錯誤';
+            toast.error(`更新失敗：${message}`);
         } finally {
             setSaving(false);
             setIsEditingMode(false);
@@ -176,15 +214,16 @@ export default function TimelinePanel({ storyId }: TimelinePanelProps) {
             start: { year: parseInt(editingEra.startYear), month: parseInt(editingEra.startMonth) },
             end: { year: parseInt(editingEra.endYear), month: parseInt(editingEra.endMonth) },
         };
-        const updated: TimelineJson = { ...timeline, eras: updatedEras };
+        const updated = attachYears({ ...timeline, eras: updatedEras });
         setSaving(true);
         try {
             await saveTimelineByStoryId(storyId, updated);
             setTimeline(updated);
             toast.success('年號已更新');
             setEditingEraDialogOpen(false);
-        } catch {
-            toast.error('更新失敗');
+        } catch (err: any) {
+            const message = err?.response?.data?.message ?? err?.message ?? '未知錯誤';
+            toast.error(`更新失敗：${message}`);
         } finally {
             setSaving(false);
         }
@@ -192,18 +231,19 @@ export default function TimelinePanel({ storyId }: TimelinePanelProps) {
 
     const handleDeleteEra = async () => {
         if (editingEraIndex === null || !timeline) return;
-        const updated: TimelineJson = {
+        const updated = attachYears({
             ...timeline,
             eras: timeline.eras?.filter((_, i) => i !== editingEraIndex) || [],
-        };
+        });
         setSaving(true);
         try {
             await saveTimelineByStoryId(storyId, updated);
             setTimeline(updated);
             toast.success('年號已刪除');
             setEditingEraDialogOpen(false);
-        } catch {
-            toast.error('刪除失敗');
+        } catch (err: any) {
+            const message = err?.response?.data?.message ?? err?.message ?? '未知錯誤';
+            toast.error(`刪除失敗：${message}`);
         } finally {
             setSaving(false);
         }
@@ -212,7 +252,7 @@ export default function TimelinePanel({ storyId }: TimelinePanelProps) {
 
     if (loading) return <p className="text-gray-500 p-4">載入中...</p>;
     if (error) return <p className="text-red-500 p-4">{error}</p>;
-    if (!timeline) return null;
+    if (!timeline) return <p className="text-gray-400 p-4">尚未建立任何時間軸資料，請新增第一筆事件。</p>;
 
     return (
         <div className="w-full h-full overflow-x-auto bg-white rounded shadow">
@@ -324,18 +364,21 @@ export default function TimelinePanel({ storyId }: TimelinePanelProps) {
                                                 className="bg-destructive text-white hover:bg-destructive/90"
                                                 onClick={async () => {
                                                     if (!timeline || !editingEventId) return;
-                                                    const updated: TimelineJson = {
+                                                    const updated: TimelineJson = attachYears({
                                                         ...timeline,
+                                                        customYears: [...customYears],
                                                         events: timeline.events.filter(e => e.id !== editingEventId),
-                                                    };
+                                                        eras: [...(timeline.eras ?? [])],
+                                                    });
                                                     setSaving(true);
                                                     try {
                                                         await saveTimelineByStoryId(storyId, updated);
                                                         setTimeline(updated);
                                                         toast.success('事件已刪除');
                                                         setEditingDialogOpen(false);
-                                                    } catch {
-                                                        toast.error('刪除失敗');
+                                                    } catch (err: any) {
+                                                        const message = err?.response?.data?.message ?? err?.message ?? '未知錯誤';
+                                                        toast.error(`刪除失敗：${message}`);
                                                     } finally {
                                                         setSaving(false);
                                                     }
@@ -365,12 +408,16 @@ export default function TimelinePanel({ storyId }: TimelinePanelProps) {
                         )}
                     </DialogFooter>
                 </DialogContent>
+
             </Dialog>
 
-            {/* 新增年號按鈕 */}
-            <div className="flex my-2 px-2">
+            {/* 年區段可編輯按鈕 */}
+            <div className="flex gap-2 my-2 px-2">
                 <Button size="sm" variant="outline" onClick={() => setEraDialogOpen(true)}>
                     ➕ 新增年號區段
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setEditYearsOpen(true)}>
+                    🛠 編輯年份區段
                 </Button>
             </div>
 
@@ -403,20 +450,88 @@ export default function TimelinePanel({ storyId }: TimelinePanelProps) {
                     })}
                 </div>
 
-
-
                 {/* 年度分隔列 */}
                 <div className="flex space-x-4 border-b pb-1 mb-2 px-2">
-                    {years.map((year, idx) => (
+                    {customYears.map((year, idx) => (
                         <div key={idx} className="w-[120px] text-center text-sm font-semibold">{year} 年</div>
                     ))}
                 </div>
 
 
+
+                {/* 年區段編輯 Dialog */}
+                <Dialog open={editYearsOpen} onOpenChange={setEditYearsOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>編輯年份區段</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-2">
+                            {customYears.map((year, index) => (
+                                <Input
+                                    key={index}
+                                    type="number"
+                                    value={year}
+                                    onChange={(e) => {
+                                        const newYears = [...customYears];
+                                        newYears[index] = parseInt(e.target.value);
+                                        setCustomYears(newYears);
+                                    }}
+                                />
+                            ))}
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setCustomYears([...customYears, customYears[customYears.length - 1] + 100])}
+                                >
+                                    ➕ 新增區段
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => setCustomYears(customYears.slice(0, -1))}
+                                >
+                                    🗑 刪除最後
+                                </Button>
+                            </div>
+                        </div>
+
+                        <Button
+                            onClick={async () => {
+                                if (!timeline) return;
+
+                                // 主動更新 timeline.customYears
+                                const updated: TimelineJson = {
+                                    ...timeline,
+                                    customYears: [...customYears], // 確保同步到 json 中
+                                    events: [...timeline.events],
+                                    eras: [...(timeline.eras ?? [])],
+                                };
+
+                                setSaving(true);
+                                try {
+                                    await saveTimelineByStoryId(storyId, updated);
+                                    setTimeline(updated); // 更新 state，避免 reload 又是舊資料
+                                    toast.success('年份區段已儲存');
+                                    setEditYearsOpen(false);
+                                } catch (err: any) {
+                                    const message = err?.response?.data?.message ?? err?.message ?? '未知錯誤';
+                                    toast.error(`儲存失敗：${message}`);
+                                } finally {
+                                    setSaving(false);
+                                }
+                            }}
+                            disabled={saving}
+                            className="w-full"
+                        >
+                            💾 儲存年份區段
+                        </Button>
+
+                    </DialogContent>
+                </Dialog>
+
                 {/* 每年對應事件列表 */}
                 <div className="flex space-x-4 px-2">
-                    {years.slice(0, -1).map((year, idx) => {
-                        const nextYear = years[idx + 1];
+                    {customYears.map((year, idx) => {
+                        const nextYear = customYears[idx + 1] ?? year + 100;
                         const events = timeline.events.filter(e => e.year >= year && e.year < nextYear);
                         return (
                             <div key={idx} className="w-[120px] space-y-2">

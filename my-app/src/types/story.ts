@@ -55,4 +55,5 @@ export interface TimelineEra {
 export interface TimelineJson {
   events: TimelineEvent[];
   eras: TimelineEra[];
+  customYears?: number[];
 }
