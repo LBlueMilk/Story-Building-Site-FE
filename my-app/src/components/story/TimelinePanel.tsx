@@ -367,6 +367,13 @@ export default function TimelinePanel({ storyId }: TimelinePanelProps) {
                 </DialogContent>
             </Dialog>
 
+            {/* 新增年號按鈕 */}
+            <div className="flex my-2 px-2">
+                <Button size="sm" variant="outline" onClick={() => setEraDialogOpen(true)}>
+                    ➕ 新增年號區段
+                </Button>
+            </div>
+
             <div className="min-w-fit px-4 py-2">
                 {/* 年號區段列 */}
                 <div className="relative mb-4 h-8 border-b">
@@ -396,12 +403,7 @@ export default function TimelinePanel({ storyId }: TimelinePanelProps) {
                     })}
                 </div>
 
-                {/* 新增年號按鈕置右 */}
-                <div className="flex justify-end mb-2 px-2">
-                    <Button size="sm" variant="outline" onClick={() => setEraDialogOpen(true)}>
-                        ➕ 新增年號區段
-                    </Button>
-                </div>
+
 
                 {/* 年度分隔列 */}
                 <div className="flex space-x-4 border-b pb-1 mb-2 px-2">

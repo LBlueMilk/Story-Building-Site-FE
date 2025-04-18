@@ -115,6 +115,14 @@ export default function StoryWorkspace({ storyId }: Props) {
 
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)] relative select-none">
+            {/* 故事標題區塊 */}
+            <div className="border-b bg-background px-6 py-3">
+                <h1 className="text-xl font-bold text-foreground truncate">{story.title || '未命名故事'}</h1>
+                {story.description && (
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{story.description}</p>
+                )}
+            </div>
+
             {/* 畫布區塊 */}
             <div style={{ height: `${canvasHeight}%` }} className="relative overflow-auto border-b border-gray-300">
                 <CanvasBoard storyId={storyId} />

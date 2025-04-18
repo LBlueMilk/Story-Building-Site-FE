@@ -14,6 +14,8 @@ import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import Link from 'next/link'
 import { deleteAccount } from '@/services/auth';
 import { StoryResponse } from '@/types/story';
+import StoryDialog from '@/components/dialogs/StoryDialog';
+
 
 /// 判斷是更新個人資料還是刪除帳號
 type PasswordPurpose = 'updateProfile' | 'deleteAccount' | null;
@@ -39,6 +41,8 @@ export default function ProfilePage() {
     const [sharedStories, setSharedStories] = useState<StoryResponse[]>([]);
     const [confirmPurpose, setConfirmPurpose] = useState<PasswordPurpose>(null);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [editingStory, setEditingStory] = useState<StoryResponse | null>(null);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
 
     useEffect(() => {
@@ -269,7 +273,7 @@ export default function ProfilePage() {
 
 
                     {/* 下側內容 */}
-                    <div className="w-full max-w-6xl p-6 flex flex-col flex-grow mx-auto">
+                    <div className="w-full max-w-full lg:max-w-7xl xl:max-w-[90rem] p-6 flex flex-col flex-grow mx-auto">
                         <Card className="w-full shadow-none border-none flex flex-col flex-grow">
                             <CardHeader>
                                 <CardTitle className="text-xl">
@@ -377,43 +381,42 @@ export default function ProfilePage() {
                                                             <Trash2 size={16} />
                                                         </Button>
                                                         <h3 className="font-bold">{story.title}</h3>
-                                                        <p className="text-sm text-gray-500">
-                                                            {isExpanded
-                                                                ? story.description || '（無描述）'
-                                                                : (story.description || '（無描述）').slice(0, 50) +
-                                                                (story.description &&
-                                                                    story.description.length > 50
-                                                                    ? '...'
-                                                                    : '')}
+                                                        <p className="text-sm text-gray-500 break-words whitespace-pre-line">
+                                                            {(story.description || '（無描述）').slice(0, 500) +
+                                                                (story.description && story.description.length > 500 ? '...' : '')}
                                                         </p>
-                                                        <div className="flex justify-between items-center mt-2">
-                                                            <p className="text-xs">
-                                                                {story.isPublic ? '🌐 公開故事' : '🔒 私人故事'} | 建立於{' '}
+
+
+                                                        <div className="flex items-center justify-between mt-4">
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {story.isPublic ? '🔒 私人故事' : '🌐 公開故事'}｜建立於{' '}
                                                                 {new Date(story.createdAt).toLocaleString()}
                                                             </p>
-                                                            <Button
-                                                                variant="link"
-                                                                className="p-0 text-blue-500"
-                                                                onClick={() => {
-                                                                    if (isExpanded) {
-                                                                        setExpandedStoryIds(
-                                                                            expandedStoryIds.filter((id) => id !== story.id)
-                                                                        );
-                                                                    } else {
-                                                                        setExpandedStoryIds([
-                                                                            ...expandedStoryIds,
-                                                                            story.id,
-                                                                        ]);
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <Link
-                                                                    href={`/story/${story.id}`}
-                                                                    className="text-blue-500 hover:underline text-sm mt-2 inline-block"
+
+                                                            <div className="flex gap-2 items-center">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="text-sm text-blue-600 hover:text-blue-700 px-1 h-auto"
+                                                                    onClick={() => {
+                                                                        window.location.href = `/story/${story.id}`;
+                                                                    }}
                                                                 >
-                                                                    詳細內容
-                                                                </Link>
-                                                            </Button>
+                                                                    🔎 詳細內容
+                                                                </Button>
+
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="text-sm text-gray-500 hover:text-primary px-1 h-auto"
+                                                                    onClick={() => {
+                                                                        setEditingStory(story);
+                                                                        setIsEditDialogOpen(true);
+                                                                    }}
+                                                                >
+                                                                    ✏️ 編輯
+                                                                </Button>
+                                                            </div>
                                                         </div>
                                                     </Card>
                                                 );
@@ -522,6 +525,18 @@ export default function ProfilePage() {
                     </div>
                 )
             }
+
+            <StoryDialog
+                open={isEditDialogOpen}
+                setOpen={setIsEditDialogOpen}
+                initialStory={editingStory}
+                onUpdate={async () => {
+                    // 編輯成功後重新載入故事
+                    const { data } = await getStories();
+                    setStories(data.sort((a, b) => a.id - b.id));
+                }}
+            />
+
         </>
     );
 }

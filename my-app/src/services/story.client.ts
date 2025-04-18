@@ -19,3 +19,24 @@ export async function getStoryByIdClient(id: number, token: string): Promise<Sto
 
   return res.json();
 }
+
+export async function updateStory(
+  id: number,
+  payload: { title: string; description?: string | null; isPublic?: boolean }
+): Promise<{ message: string }> {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/story/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || '更新失敗');
+  }
+
+  return res.json();
+}

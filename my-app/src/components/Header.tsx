@@ -23,7 +23,7 @@ import { MenuIcon } from 'lucide-react';
 import Image from 'next/image';
 import LoginDialog from '@/components/dialogs/LoginDialog';
 import RegisterDialog from '@/components/dialogs/RegisterDialog';
-import CreateStoryDialog from '@/components/dialogs/CreateStoryDialog';
+import StoryDialog from '@/components/dialogs/StoryDialog';
 import AnnouncementButton from '@/components/AnnouncementButton';
 import { useTheme } from '@/context/ThemeContext';
 import { customButton } from '@/lib/buttonVariants';
@@ -53,7 +53,7 @@ export default function Header() {
   };
 
   const handleLogout = () => {
-    setStories([]); 
+    setStories([]);
     logout();
     router.push('/');
   };
@@ -113,8 +113,25 @@ export default function Header() {
           </Button>
         ) : (
           <>
-            <CreateStoryDialog open={openCreate} setOpen={setOpenCreate} />
+            <StoryDialog
+              open={openCreate}
+              setOpen={setOpenCreate}
+              initialStory={null}
+              onUpdate={async () => {
+                const { data } = await getStories();
+                setStories(data.sort((a, b) => a.id - b.id));
+              }}
+            />
+
             <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setOpenCreate(true)}
+              >
+                建立新故事
+              </Button>
+
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="secondary"
