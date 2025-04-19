@@ -68,6 +68,12 @@ interface LoginResult {
   user: UserType
 }
 
+interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
+
 // 登入 API
 export const login = async (data: LoginRequest): Promise<LoginResult> => {
   const res = await api.post<LoginResult>('/auth/login', data)
@@ -131,4 +137,16 @@ export async function deleteAccount() {
 export const restoreAccount = () => {
   return api.put('/auth/restore-account') 
 }
+
+// 使用 Refresh Token 換取新的 Access Token（自動續登機制）
+// - 前端 accessToken 過期時觸發（由 Axios interceptor 自動呼叫）
+// - 提供 refreshToken 給後端，若合法則回傳新的 accessToken + refreshToken
+// - 回傳格式為：{ accessToken: string, refreshToken: string }
+// 若 refreshToken 無效或過期，後端會回傳 401，並要求重新登入
+export const refreshAccessToken = async (refreshToken: string): Promise<RefreshTokenResponse> => {
+  const res = await api.post<RefreshTokenResponse>('/auth/refresh-token', { refreshToken });
+  return res.data;
+};
+
+
 

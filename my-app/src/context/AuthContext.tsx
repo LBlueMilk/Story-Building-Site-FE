@@ -6,6 +6,8 @@ import { UserType } from '@/types/user';
 import { useRouter } from 'next/navigation';
 import { getProfile } from '@/services/auth';
 import { toast } from 'sonner';
+import { refreshAccessToken } from '@/services/auth';
+
 
 
 interface AuthContextType {
@@ -24,10 +26,33 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => { },
 });
 
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setTokenState] = useState<string | null>(null);
   const [user, setUserState] = useState<UserType | null>(null);
   const router = useRouter();
+
+  // 應用載入時自動續登（使用 refresh token）
+  useEffect(() => {
+    const tryRefresh = async () => {
+      const refreshToken = TokenService.getRefreshToken();
+      if (refreshToken && !token) {
+        try {
+          const { accessToken, refreshToken: newRefreshToken } = await refreshAccessToken(refreshToken);
+          setToken(accessToken);
+          TokenService.setTokens(accessToken, newRefreshToken);
+          const { data } = await getProfile();
+          setUser(data);
+          console.log('✅ 自動刷新 token 成功');
+        } catch (err) {
+          console.warn('❌ 自動刷新 token 失敗，需重新登入');
+          logout();
+        }
+      }
+    };
+  
+    tryRefresh();
+  }, []);
 
   // 初始化：從 localStorage 載入
   useEffect(() => {
