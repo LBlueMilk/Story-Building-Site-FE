@@ -1,20 +1,10 @@
-// 允許訪客存取
+// src/app/public/[id]/page.tsx
 
-{/*
-export default async function PublicViewPage({ params }: { params: { id: string } }) {
-    const storyId = Number(params.id);
-    const story = await getStoryByIdWithoutToken(storyId); // 你需要設計這種不帶 Token 的 API
-  
-    if (!story || !story.isPublic) {
-      return notFound();
-    }
-  
-    return (
-      <div className="prose mx-auto my-8">
-        <h1>{story.title}</h1>
-        <p>{story.description}</p>
-      </div>
-    );
-  }
-*/}
-  
+export default function PublicStoryPage() {
+  return (
+    <div className="prose mx-auto my-10 text-center">
+      <h1 className="text-2xl font-bold">公開故事頁面尚未開發</h1>
+      <p className="text-gray-500 mt-2">我們正在努力建置中，敬請期待！</p>
+    </div>
+  );
+}
