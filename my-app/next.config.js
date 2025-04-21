@@ -1,6 +1,5 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -13,6 +12,7 @@ const nextConfig: NextConfig = {
         },
       ];
     }
+
     // 這裡是生產環境的設定
     // 可以根據實際情況修改 destination 的 URL
     // 正式環境 rewrite 到 Render 雲端後端 API
@@ -25,4 +25,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
