@@ -13,7 +13,15 @@ const nextConfig: NextConfig = {
         },
       ];
     }
-    return [];
+    // 這裡是生產環境的設定
+    // 可以根據實際情況修改 destination 的 URL
+    // 正式環境 rewrite 到 Render 雲端後端 API
+    return [
+      {
+        source: "/api/:path*",
+        destination: "https://storybuildingsite-backendapi.onrender.com/api/:path*",
+      },
+    ];
   },
 };
 
