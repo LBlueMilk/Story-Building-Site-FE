@@ -22,7 +22,7 @@ export default function ConfirmPasswordDialog({
     const [isVerifying, setIsVerifying] = useState(false);
 
     const handleVerify = async () => {
-        if (!password) {
+        if (!password.trim()) {
             toast.error('請輸入密碼');
             return;
         }
@@ -35,6 +35,7 @@ export default function ConfirmPasswordDialog({
             setOpen(false);
             onVerified(); // 通知 Profile 執行更新
         } catch (err: any) {
+            console.log("⚠️ 進入 catch 區塊");
             let finalMessage = '密碼驗證失敗，請重新輸入';
 
             try {
@@ -64,7 +65,7 @@ export default function ConfirmPasswordDialog({
         }
         finally {
             setIsVerifying(false);
-            setPassword('');
+            //setPassword('');
         }
     };
 
@@ -82,7 +83,7 @@ export default function ConfirmPasswordDialog({
                     disabled={isVerifying}
                 />
                 <DialogFooter>
-                    <Button onClick={handleVerify} disabled={isVerifying || !password}>
+                    <Button onClick={handleVerify} disabled={isVerifying}>
                         {isVerifying ? '驗證中...' : '確認'}
                     </Button>
                 </DialogFooter>
