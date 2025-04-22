@@ -40,13 +40,19 @@ export default function ConfirmPasswordDialog({
             try {
                 const resData = err?.response?.data;
                 console.log('🔍 錯誤回傳內容 =', resData);
-                
-                if (typeof resData === 'string') {
-                    finalMessage = resData;
-                } else if (typeof resData?.message === 'string') {
-                    finalMessage = resData.message;
-                } else if (typeof resData?.title === 'string') {
-                    finalMessage = resData.title; // ASP.NET Core 常見格式
+
+                if (resData) {
+                    if (typeof resData === 'string') {
+                        finalMessage = resData;
+                    } else if (typeof resData?.message === 'string') {
+                        finalMessage = resData.message;
+                    } else if (typeof resData?.title === 'string') {
+                        finalMessage = resData.title;
+                    } else {
+                        finalMessage = JSON.stringify(resData);
+                    }
+                } else if (err?.message) {
+                    finalMessage = err.message;
                 }
             } catch (parseErr) {
                 console.warn('錯誤訊息解析失敗:', parseErr);
