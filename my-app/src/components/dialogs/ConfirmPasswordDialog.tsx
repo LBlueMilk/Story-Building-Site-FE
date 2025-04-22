@@ -39,7 +39,7 @@ export default function ConfirmPasswordDialog({
 
             try {
                 const resData = err?.response?.data;
-                console.log('🔍 錯誤回傳內容 =', resData);
+                console.log('🔍 伺服器錯誤原始內容 =', resData);
 
                 if (resData) {
                     if (typeof resData === 'string') {
