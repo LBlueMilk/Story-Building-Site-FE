@@ -5,8 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import axios from 'axios';
 import { toast } from 'sonner';
+import api from '@/services/api'; 
 
 
 interface EmailDialogProps {
@@ -26,7 +26,7 @@ export default function EmailDialog({ open, setOpen }: EmailDialogProps) {
 
     try {
       // 呼叫後端 API
-      await axios.post('https://localhost:7276/api/contact/send', {
+      await api.post('/contact/send', {
         name,
         email,
         message

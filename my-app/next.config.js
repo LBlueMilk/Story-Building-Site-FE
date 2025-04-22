@@ -4,6 +4,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   async rewrites() {
+    // 本地開發時，前端會透過 proxy 訪問本地後端
     if (process.env.NODE_ENV === "development") {
       return [
         {
