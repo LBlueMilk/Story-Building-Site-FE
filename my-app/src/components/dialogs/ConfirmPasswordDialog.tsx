@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { verifyPassword } from '@/services/auth';
+import { toastError, toastSuccess } from '@/lib/toastUtils';
 
 interface ConfirmPasswordDialogProps {
     open: boolean;
@@ -22,7 +23,7 @@ export default function ConfirmPasswordDialog({
     const [isVerifying, setIsVerifying] = useState(false);
 
     const handleVerify = async () => {
-        if (!password.trim()) {
+        if (!password) {
             toast.error('請輸入密碼');
             return;
         }
@@ -31,7 +32,7 @@ export default function ConfirmPasswordDialog({
 
         try {
             await verifyPassword(password); // 呼叫驗證 API
-            toast.success('密碼驗證成功');
+            toastSuccess('密碼驗證成功');
             setOpen(false);
             onVerified(); // 通知 Profile 執行更新
         } catch (err: any) {
@@ -40,7 +41,6 @@ export default function ConfirmPasswordDialog({
 
             try {
                 const resData = err?.response?.data;
-                console.log('🔍 伺服器錯誤原始內容 =', resData);
 
                 if (resData) {
                     if (typeof resData === 'string') {
@@ -61,11 +61,11 @@ export default function ConfirmPasswordDialog({
 
             console.error('密碼驗證失敗:', err);
             toast.dismiss('confirm-password-error');
-            toast.error(finalMessage, { id: 'confirm-password-error' });
+            toastError(finalMessage, undefined, 'confirm-password-error');
         }
         finally {
             setIsVerifying(false);
-            //setPassword('');
+            setPassword('');
         }
     };
 
@@ -83,7 +83,7 @@ export default function ConfirmPasswordDialog({
                     disabled={isVerifying}
                 />
                 <DialogFooter>
-                    <Button onClick={handleVerify} disabled={isVerifying}>
+                    <Button onClick={handleVerify} disabled={isVerifying || !password}>
                         {isVerifying ? '驗證中...' : '確認'}
                     </Button>
                 </DialogFooter>

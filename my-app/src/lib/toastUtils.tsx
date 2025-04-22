@@ -10,12 +10,14 @@ export const toastSuccess = (title: string, description?: string) =>
     </div>
   );
 
-export const toastError = (title: string, description?: string) =>
+export const toastError = (title: string, description?: string, id?: string) =>
   toast(
     <div>
       <p className="font-semibold text-red-500 text-center">{title}</p>
       {description && (
         <p className="text-sm text-muted-foreground">{description}</p>
       )}
-    </div>
+    </div>,
+    id ? { id } : undefined
   );
+
