@@ -38,12 +38,14 @@ export default function ConfirmPasswordDialog({
             let finalMessage = '密碼驗證失敗，請重新輸入';
 
             try {
-                if (err?.response?.data) {
-                    if (typeof err.response.data === 'string') {
-                        finalMessage = err.response.data;
-                    } else if (typeof err.response.data.message === 'string') {
-                        finalMessage = err.response.data.message;
-                    }
+                const resData = err?.response?.data;
+
+                if (typeof resData === 'string') {
+                    finalMessage = resData;
+                } else if (typeof resData?.message === 'string') {
+                    finalMessage = resData.message;
+                } else if (typeof resData?.title === 'string') {
+                    finalMessage = resData.title; // ASP.NET Core 常見格式
                 }
             } catch (parseErr) {
                 console.warn('錯誤訊息解析失敗:', parseErr);
