@@ -22,7 +22,13 @@ export default function ConfirmPasswordDialog({
     const [isVerifying, setIsVerifying] = useState(false);
 
     const handleVerify = async () => {
+        if (!password) {
+            toast.error('請輸入密碼');
+            return;
+        }
+
         setIsVerifying(true);
+
         try {
             await verifyPassword(password); // 呼叫驗證 API
             toast.success('密碼驗證成功');
@@ -31,15 +37,19 @@ export default function ConfirmPasswordDialog({
         } catch (err: any) {
             let finalMessage = '密碼驗證失敗，請重新輸入';
 
-            if (err?.response?.data) {
-                if (typeof err.response.data === 'string') {
-                    finalMessage = err.response.data;
-                } else if (typeof err.response.data.message === 'string') {
-                    finalMessage = err.response.data.message;
+            try {
+                if (err?.response?.data) {
+                    if (typeof err.response.data === 'string') {
+                        finalMessage = err.response.data;
+                    } else if (typeof err.response.data.message === 'string') {
+                        finalMessage = err.response.data.message;
+                    }
                 }
+            } catch (parseErr) {
+                console.warn('錯誤訊息解析失敗:', parseErr);
             }
 
-            console.error('密碼驗證錯誤:', err);
+            console.error('密碼驗證失敗:', err);
             toast.dismiss('confirm-password-error');
             toast.error(finalMessage, { id: 'confirm-password-error' });
         }
