@@ -1,23 +1,29 @@
 import { toast } from 'sonner';
 
 export const toastSuccess = (title: string, description?: string) =>
-  toast(
+  toast.success(
     <div>
       <p className="font-semibold text-green-600 text-center">{title}</p>
       {description && (
         <p className="text-sm text-muted-foreground">{description}</p>
       )}
-    </div>
+    </div>,
+    {
+      duration: 4000,
+    }
   );
 
 export const toastError = (title: string, description?: string, id?: string) =>
-  toast(
+  toast.error(
     <div>
       <p className="font-semibold text-red-500 text-center">{title}</p>
       {description && (
         <p className="text-sm text-muted-foreground">{description}</p>
       )}
     </div>,
-    id ? { id } : undefined
+    {
+      id,
+      duration: 4000,
+    }
   );
 

@@ -1,4 +1,4 @@
-import Cookies from 'js-cookie'
+import Cookies from 'js-cookie';
 
 export const TokenService = {
   setTokens: (accessToken: string, refreshToken: string) => {
@@ -14,5 +14,6 @@ export const TokenService = {
     Cookies.remove('refreshToken');
   },
   getAccessToken: () => localStorage.getItem('accessToken'),
-  getRefreshToken: () => localStorage.getItem('refreshToken')
+  getRefreshToken: () =>
+    Cookies.get('refreshToken') || localStorage.getItem('refreshToken'),
 };

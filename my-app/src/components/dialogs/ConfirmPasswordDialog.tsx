@@ -37,6 +37,7 @@ export default function ConfirmPasswordDialog({
             onVerified(); // 通知 Profile 執行更新
         } catch (err: any) {
             console.log("⚠️ 進入 catch 區塊");
+
             let finalMessage = '密碼驗證失敗，請重新輸入';
 
             try {
@@ -59,9 +60,13 @@ export default function ConfirmPasswordDialog({
                 console.warn('錯誤訊息解析失敗:', parseErr);
             }
 
+            if (!finalMessage || finalMessage.trim() === '') {
+                finalMessage = '密碼驗證失敗，請重新輸入';
+            }
+
             console.error('密碼驗證失敗:', err);
-            toast.dismiss('confirm-password-error');
-            toastError(finalMessage, undefined, 'confirm-password-error');
+            console.log('toast 預備顯示:', finalMessage);
+            toast.error(finalMessage || '密碼驗證失敗');
         }
         finally {
             setIsVerifying(false);

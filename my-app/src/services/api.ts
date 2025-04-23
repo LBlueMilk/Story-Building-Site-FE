@@ -112,6 +112,18 @@ instance.interceptors.response.use(
       }
     }
 
+    if (error.config?.skipGlobalErrorHandler !== true) {
+      const errorData = error?.response?.data;
+      const message =
+        errorData?.error ||
+        errorData?.message ||
+        errorData?.title ||
+        error?.message ||
+        '操作失敗，請稍後再試';
+
+      toast.error(message);
+    }
+
     return Promise.reject(error);
   }
 );

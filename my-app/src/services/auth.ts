@@ -1,6 +1,6 @@
 import api from './api';
 import { StoryResponse } from '@/types/story';
-import { UserType } from '@/types/user'; 
+import { UserType } from '@/types/user';
 import Cookies from 'js-cookie'
 
 // 已刪除的故事
@@ -73,6 +73,10 @@ interface RefreshTokenResponse {
   refreshToken: string;
 }
 
+interface VerifyPasswordResponse {
+  message: string;
+}
+
 
 // 登入 API
 export const login = async (data: LoginRequest): Promise<LoginResult> => {
@@ -102,8 +106,14 @@ export const updateProfile = (data: UpdateProfileRequest) =>
   api.put<UpdateProfileResponse>('/auth/update', data);
 
 // 驗證密碼 API
-export const verifyPassword = (password: string) => {
-  return api.post('/auth/verify-password', { password });
+export const verifyPassword = async (password: string): Promise<VerifyPasswordResponse> => {
+  try {
+    const res = await api.post<VerifyPasswordResponse>('/auth/verify-password', { password });
+    return res.data;
+  } catch (err) {
+    // 確保錯誤會傳遞給呼叫方的 catch 區塊
+    throw err;
+  }
 };
 
 // 已建立故事 API
@@ -135,7 +145,7 @@ export async function deleteAccount() {
 
 // 還原帳號
 export const restoreAccount = () => {
-  return api.put('/auth/restore-account') 
+  return api.put('/auth/restore-account')
 }
 
 // 使用 Refresh Token 換取新的 Access Token（自動續登機制）

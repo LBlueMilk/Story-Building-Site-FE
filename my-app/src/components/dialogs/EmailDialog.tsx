@@ -6,8 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import api from '@/services/api'; 
-
+import api from '@/services/api';
 
 interface EmailDialogProps {
   open: boolean;
@@ -27,9 +26,9 @@ export default function EmailDialog({ open, setOpen }: EmailDialogProps) {
     try {
       // 呼叫後端 API
       await api.post('/contact/send', {
-        name,
-        email,
-        message
+        Name: name,
+        Email: email,
+        Message: message
       });
 
       toast.success('訊息已成功寄出！');
@@ -38,10 +37,27 @@ export default function EmailDialog({ open, setOpen }: EmailDialogProps) {
       setEmail('');
       setMessage('');
       setOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('發送失敗:', error);
-      toast.dismiss('email-error'); // 關掉舊的錯誤提示
-      toast.error('發送失敗，請稍後再試', { id: 'email-error' }); // 限制只顯示一次
+
+      const errorData = error?.response?.data;
+
+      let errorMessage =
+        errorData?.error ||
+        errorData?.message ||
+        errorData?.title ||
+        error?.message ||
+        '發送失敗，請稍後再試';
+
+      if (errorData?.errors && typeof errorData.errors === 'object') {
+        const firstKey = Object.keys(errorData.errors)[0];
+        if (firstKey && Array.isArray(errorData.errors[firstKey])) {
+          errorMessage = errorData.errors[firstKey][0];
+        }
+      }
+
+      toast.dismiss('email-error');
+      toast.error(errorMessage, { id: 'email-error' });
     }
     finally {
       setLoading(false);
