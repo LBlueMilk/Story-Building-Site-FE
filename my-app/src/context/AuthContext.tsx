@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { TokenService } from '@/services/tokenService';
 import { UserType } from '@/types/user';
 import { useRouter } from 'next/navigation';
@@ -32,98 +32,107 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUserState] = useState<UserType | null>(null);
   const router = useRouter();
 
-  // 應用載入時自動續登（使用 refresh token）
-  useEffect(() => {
-    const tryRefresh = async () => {
-      const refreshToken = TokenService.getRefreshToken();
-      if (refreshToken && !token) {
-        try {
-          const { accessToken, refreshToken: newRefreshToken } = await refreshAccessToken(refreshToken);
-          setToken(accessToken);
-          TokenService.setTokens(accessToken, newRefreshToken);
-          const { data } = await getProfile();
-          setUser(data);
-          console.log('✅ 自動刷新 token 成功');
-        } catch (err) {
-          console.warn('❌ 自動刷新 token 失敗，需重新登入');
-          logout();
-        }
-      }
-    };
-  
-    tryRefresh();
-  }, []);
-
-  // 初始化：從 localStorage 載入
-  useEffect(() => {
-    const storedToken = localStorage.getItem('accessToken');
-    const storedUser = localStorage.getItem('user');
-    if (storedToken) setTokenState(storedToken);
-    if (storedUser) setUserState(JSON.parse(storedUser));
-  }, []);
-
-  // 設定 Token（並自動保存至 TokenService）
-  const setToken = (token: string | null) => {
-    if (token) {
+  /* ----------- 將 token & refreshToken 寫入 / 清除 ----------- */
+  const setToken = useCallback((accessToken: string | null) => {
+    if (accessToken) {
       const refreshToken = TokenService.getRefreshToken() || '';
-      TokenService.setTokens(token, refreshToken);
+      TokenService.setTokens(accessToken, refreshToken);
     } else {
       TokenService.clearTokens();
     }
-    setTokenState(token);
-  };
+    setTokenState(accessToken);
+  }, []);
 
-  // 設定使用者（含 getProfile 呼叫，補齊 email）
-  const setUser = async (user: any | null) => {
-    if (user) {
-      // 已包含 email 就不重撈 API
-      if (user.email) {
-        localStorage.setItem('user', JSON.stringify(user))
-        setUserState(user)
-        return
-      }
-      try {
-        const { data } = await getProfile()
-        const formattedUser: UserType = {
-          id: data.id,
-          name: data.name,
-          email: data.email,
-          userCode: data.userCode,
-          isVerified: data.isVerified,
-          createdAt: data.createdAt,
-          loginProviders: data.loginProviders,
-          stories: user.stories || [],
-        }
-        localStorage.setItem('user', JSON.stringify(formattedUser))
-        setUserState(formattedUser)
-      } catch (error) {
-        console.error('❌ 載入使用者資料失敗', error)
-        const fallbackUser: UserType = {
-          id: -1,
-          name: user.name || '',
-          email: '',
-          stories: user.stories || [],
-        }
-        localStorage.setItem('user', JSON.stringify(fallbackUser))
-        setUserState(fallbackUser)
-      }
+  /* ----------- 設定 / 清除使用者資訊 ----------- */
+  const setUser = useCallback((value: UserType | null) => {
+    if (value) {
+      localStorage.setItem('user', JSON.stringify(value));
     } else {
-      localStorage.removeItem('user')
-      setUserState(null)
+      localStorage.removeItem('user');
     }
-  };
+    setUserState(value);
+  }, []);
 
-  const logout = () => {
+  /* ----------- 登出 ----------- */
+  const logout = useCallback(() => {
     TokenService.clearTokens();
     setTokenState(null);
     setUserState(null);
     localStorage.removeItem('user');
     toast.success('已成功登出');
     router.push('/');
-  };
+  }, [router]);
 
+  /* ----------- App 載入時嘗試用 refreshToken 續登 ----------- */
+  useEffect(() => {
+    const bootstrap = async () => {
+      const existingAccess = localStorage.getItem('accessToken');
+      const existingUser = localStorage.getItem('user');
+      if (existingAccess) setTokenState(existingAccess);
+      if (existingUser) setUserState(JSON.parse(existingUser));
+
+      /* 沒有 accessToken 才嘗試 silent refresh */
+      if (!existingAccess) {
+        const rt = TokenService.getRefreshToken();
+        if (!rt) return;
+
+        try {
+          const { accessToken, refreshToken } = await refreshAccessToken(rt);
+          setToken(accessToken);
+          TokenService.setTokens(accessToken, refreshToken);
+
+          const { data } = await getProfile();
+          setUser(data);
+          console.log('✅ 自動刷新 token 成功');
+        } catch {
+          console.warn('❌ 自動刷新 token 失敗，需重新登入');
+          logout();
+        }
+      }
+    };
+    bootstrap();
+  }, [logout, setToken]);
+
+  /* ----------- 靜默續期：定時檢查 exp，剩 <60s 自動 refresh ----------- */
+  const isRefreshingRef = useRef(false);
+
+  useEffect(() => {
+    const handler = setInterval(async () => {
+      if (isRefreshingRef.current) return;
+      const exp = TokenService.getAccessExp();
+      if (!exp) return;
+
+      const msLeft = exp * 1000 - Date.now();
+      if (msLeft > 60_000) return; // 仍大於 60 秒，不動作
+
+      const rt = TokenService.getRefreshToken();
+      if (!rt) {
+        logout();
+        return;
+      }
+
+      try {
+        isRefreshingRef.current = true;
+        const { accessToken, refreshToken } = await refreshAccessToken(rt);
+        setToken(accessToken);
+        TokenService.setTokens(accessToken, refreshToken);
+        console.log('🔄 Token 已靜默續期');
+      } catch {
+        console.warn('❌ 靜默續期失敗，登出');
+        logout();
+      } finally {
+        isRefreshingRef.current = false;
+      }
+    }, 30_000); // 每 30 秒檢查一次
+
+    return () => clearInterval(handler);
+  }, [token, logout, setToken]);
+
+  /* ---------------------------------------------------------- */
   return (
-    <AuthContext.Provider value={{ token, user, setToken, setUser, logout }}>
+    <AuthContext.Provider
+      value={{ token, user, setToken, setUser, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
