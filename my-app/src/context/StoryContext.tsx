@@ -25,7 +25,7 @@ const StoryContext = createContext<StoryContextType>({
 export const StoryProvider = ({ children }: { children: React.ReactNode }) => {
   const [stories, setStories] = useState<StoryResponse[]>([]);
   const [storyLoading, setStoryLoading] = useState(false);
-  const { token } = useAuth();
+  const { token, isReady } = useAuth();
 
   const fetchStories = async () => {
     try {
@@ -41,10 +41,10 @@ export const StoryProvider = ({ children }: { children: React.ReactNode }) => {
 
   // 當 token 有效時才觸發取得故事資料
   useEffect(() => {
-    if (token) {
+    if (token && isReady) {
       fetchStories();
     }
-  }, [token]);
+  }, [token, isReady]);
 
 
   return (

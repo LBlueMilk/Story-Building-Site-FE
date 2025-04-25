@@ -20,6 +20,7 @@ import {
     AlertDialogHeader, AlertDialogTitle, AlertDialogDescription,
     AlertDialogFooter, AlertDialogCancel, AlertDialogAction
 } from '@/components/ui/alert-dialog';
+import { useAuth } from '@/context/AuthContext';
 
 
 interface TimelinePanelProps {
@@ -37,7 +38,7 @@ export default function TimelinePanel({ storyId }: TimelinePanelProps) {
     const [isEditingMode, setIsEditingMode] = useState(false);
     const [editingEventId, setEditingEventId] = useState<string | null>(null);
     const [editedEvent, setEditedEvent] = useState<TimelineEvent | null>(null);
-
+    const { token, isReady } = useAuth();
     const [newEvent, setNewEvent] = useState({ title: '', content: '', month: '', day: '', eraName: '', tags: [] as string[], });
 
     const [eraDialogOpen, setEraDialogOpen] = useState(false);
@@ -59,6 +60,8 @@ export default function TimelinePanel({ storyId }: TimelinePanelProps) {
 
 
     useEffect(() => {
+        if (!isReady || !token) return;
+
         const fetchTimeline = async () => {
             try {
                 const data = await getTimelineByStoryId(storyId);
@@ -96,7 +99,7 @@ export default function TimelinePanel({ storyId }: TimelinePanelProps) {
             }
         };
         fetchTimeline();
-    }, [storyId]);
+    }, [storyId, token, isReady]);
 
 
     const MIN_YEAR = 1000;

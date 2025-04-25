@@ -1,5 +1,5 @@
 // src/services/timeline.client.ts
-import api from './api'; //
+import api from '@/services/api'; 
 
 export interface TimelineResponse {
     json: any;

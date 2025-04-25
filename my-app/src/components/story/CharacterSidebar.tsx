@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function CharacterSidebar({ storyId }: Props) {
-    const { token } = useAuth();
+    const { token, isReady } = useAuth();
     const [characters, setCharacters] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -98,7 +98,7 @@ export default function CharacterSidebar({ storyId }: Props) {
 
 
     useEffect(() => {
-        if (!token || !storyId) return;
+        if (!token || !storyId || !isReady) return;
 
         setLoading(true);
         getCharacters(storyId)
@@ -108,7 +108,7 @@ export default function CharacterSidebar({ storyId }: Props) {
             })
             .catch((err) => console.error('❌ 載入角色失敗', err))
             .finally(() => setLoading(false));
-    }, [token, storyId]);
+    }, [token, storyId, isReady]);
 
 
     return (

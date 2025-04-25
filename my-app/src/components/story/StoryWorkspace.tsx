@@ -20,7 +20,7 @@ interface Props {
 }
 
 export default function StoryWorkspace({ storyId }: Props) {
-    const { token } = useAuth();
+    const { token, isReady } = useAuth();
     const [story, setStory] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -61,14 +61,14 @@ export default function StoryWorkspace({ storyId }: Props) {
 
     // 取得故事資料
     useEffect(() => {
-        if (!token) return;
+        if (!isReady || !token) return;
         getStoryByIdClient(storyId, token)
             .then(setStory)
             .catch((err: Error) => {
                 console.error('❌ 無法載入故事內容', err);
                 setError('找不到故事或無存取權限');
             });
-    }, [storyId, token]);
+    }, [storyId, token, isReady]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

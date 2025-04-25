@@ -16,6 +16,7 @@ interface AuthContextType {
   user: UserType | null;
   setUser: (user: UserType | any | null) => void;
   logout: () => void;
+  isReady: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -24,6 +25,7 @@ const AuthContext = createContext<AuthContextType>({
   setToken: () => { },
   setUser: () => { },
   logout: () => { },
+  isReady: false,
 });
 
 
@@ -31,6 +33,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setTokenState] = useState<string | null>(null);
   const [user, setUserState] = useState<UserType | null>(null);
   const router = useRouter();
+  const [isReady, setIsReady] = useState(false);
 
   /* ----------- 將 token & refreshToken 寫入 / 清除 ----------- */
   const setToken = useCallback((accessToken: string | null) => {
@@ -74,7 +77,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       /* 沒有 accessToken 才嘗試 silent refresh */
       if (!existingAccess) {
         const rt = TokenService.getRefreshToken();
-        if (!rt) return;
+        if (!rt) {
+          setIsReady(true);
+          return;
+        }
 
         try {
           const { accessToken, refreshToken } = await refreshAccessToken(rt);
@@ -89,6 +95,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           logout();
         }
       }
+      setIsReady(true);
     };
     bootstrap();
   }, [logout, setToken]);
@@ -131,7 +138,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   /* ---------------------------------------------------------- */
   return (
     <AuthContext.Provider
-      value={{ token, user, setToken, setUser, logout }}
+      value={{ token, user, setToken, setUser, logout, isReady }}
     >
       {children}
     </AuthContext.Provider>

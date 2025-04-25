@@ -18,7 +18,7 @@ interface Stroke {
 }
 
 export default function CanvasBoard({ storyId }: Props) {
-    const { token } = useAuth();
+    const { token, isReady } = useAuth();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -55,7 +55,7 @@ export default function CanvasBoard({ storyId }: Props) {
 
     // 載入資料
     useEffect(() => {
-        if (!token) return;
+        if (!isReady || !token) return;
         getCanvas(storyId)
             .then((res) => {
                 setCanvasData(res.json);
@@ -74,7 +74,7 @@ export default function CanvasBoard({ storyId }: Props) {
                     console.error('❌ 載入 Canvas 失敗', err);
                 }
             });
-    }, [storyId, token]);
+    }, [storyId, token, isReady]);
 
     // 重繪畫布
     useEffect(() => {
