@@ -1,45 +1,44 @@
+/**
+ * 動態 Sitemap 產生器
+ * - force-dynamic：禁止 Next.js build 時靜態化
+ * - runtime = 'edge'：部署為 Edge Function，加速全球存取
+ */
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    // 呼叫 ASP.NET Core 提供的公開故事 API
-    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL + '/api/story/public';
+    // 透過 next.config.js 的 rewrites → 自動轉向 Render API
+    const res = await fetch('/api/story/public', { next: { revalidate: 60 } });
 
-    const response = await fetch(apiUrl);
-    if (!response.ok) {
-      throw new Error('無法取得資料');
-    }
+    if (!res.ok) throw new Error(`API status ${res.status}`);
 
-    const result = await response.json();
+    const stories: { publicId: string; updatedAt: string }[] = await res.json();
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://你的網站網址';
+    const site = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://example.com';
 
-    const urls = result
-      .map((story: { publicId: string; updatedAt: string }) => {
-        const lastmod = story.updatedAt.split('T')[0];
-        return `
-          <url>
-            <loc>${baseUrl}/story/${story.publicId}</loc>
-            <lastmod>${lastmod}</lastmod>
-          </url>
-        `;
+    const urls = stories
+      .map(({ publicId, updatedAt }) => {
+        const lastmod = updatedAt.split('T')[0];
+        return `<url><loc>${site}/story/${publicId}</loc><lastmod>${lastmod}</lastmod></url>`;
       })
       .join('');
 
-    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-      <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-        ${urls}
-      </urlset>
-    `;
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>`;
 
-    return new NextResponse(sitemap.trim(), {
+    return new NextResponse(xml, {
       headers: {
         'Content-Type': 'application/xml',
-        'Cache-Control': 'public, max-age=86400, s-maxage=86400', // Cache 一天
+        'Cache-Control': 'public, max-age=0, s-maxage=86400', // Edge Cache 1 天
       },
     });
   } catch (err) {
-    console.error('Sitemap 生成錯誤:', err);
+    console.error('❌ Sitemap 生成失敗：', err);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
