@@ -199,6 +199,69 @@ export default function CanvasBoard({ storyId }: Props) {
     };
 
 
+    /* 以下範圍是手機觸控事件處理 */
+    const getTouchPos = (e: React.TouchEvent<HTMLCanvasElement>) => {
+        const rect = canvasRef.current!.getBoundingClientRect();
+        const touch = e.touches[0];
+        const x = (touch.clientX - rect.left) / scale;
+        const y = (touch.clientY - rect.top) / scale;
+        return { x, y };
+    };
+
+    const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+        e.preventDefault();
+        const { x, y } = getTouchPos(e);
+        setIsDrawing(true);
+        setCurrentStroke({
+            points: [{ x, y }],
+            color,
+            width: brushWidth,
+            tool: tool,
+        });
+    };
+
+    const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+        e.preventDefault();
+        if (!isDrawing || !currentStroke || !canvasRef.current) return;
+        const { x, y } = getTouchPos(e);
+        const updatedStroke = {
+            ...currentStroke,
+            points: [...currentStroke.points, { x, y }],
+        };
+        setCurrentStroke(updatedStroke);
+
+        const ctx = canvasRef.current.getContext('2d');
+        if (ctx) {
+            if (tool === 'pen') {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.strokeStyle = updatedStroke.color;
+            } else {
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
+            }
+            ctx.lineWidth = updatedStroke.width;
+            ctx.beginPath();
+            const pts = updatedStroke.points;
+            if (pts.length >= 2) {
+                ctx.moveTo(pts[pts.length - 2].x, pts[pts.length - 2].y);
+                ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+                ctx.stroke();
+            }
+        }
+    };
+
+    const handleTouchEnd = () => {
+        if (currentStroke && currentStroke.points.length > 1) {
+            setCanvasData((prev: any) => ({
+                ...prev,
+                strokes: [...(prev?.strokes || []), currentStroke],
+            }));
+        }
+        setIsDrawing(false);
+        setCurrentStroke(null);
+    };
+    /* 以上範圍是手機觸控事件處理 */
+
     return (
         <div className="w-full h-[calc(100vh-100px)] flex flex-col overflow-hidden" ref={containerRef}>
             <div className="flex items-center justify-between p-2 border-b bg-white z-10 gap-4">
@@ -271,6 +334,10 @@ export default function CanvasBoard({ storyId }: Props) {
                         onMouseDown={handleMouseDown}
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                        onTouchCancel={handleTouchEnd}
                         onMouseLeave={(e) => {
                             handleMouseUp();
                             setMousePos(null);
