@@ -95,9 +95,13 @@ export default function RegisterDialog({ open, setOpen, openLogin }: RegisterDia
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
-                                minLength={6}
+                                pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$"
                                 className="border p-2 w-full pr-10"
-                                onInvalid={(e) => e.currentTarget.setCustomValidity('密碼至少需要 6 個字')}
+                                onInvalid={(e) =>
+                                    e.currentTarget.setCustomValidity(
+                                        '密碼至少 8 碼，需包含大小寫字母、數字與特殊符號'
+                                    )
+                                }
                                 onInput={(e) => e.currentTarget.setCustomValidity('')}
                             />
                             <button
