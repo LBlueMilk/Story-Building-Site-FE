@@ -30,6 +30,7 @@ import { customButton } from '@/lib/buttonVariants';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { getStories } from '@/services/auth';
 import { useStory } from "@/context/StoryContext";
+import { cn } from '@/lib/utils';
 
 export default function Header() {
   const { token, user, logout } = useAuth();
@@ -90,13 +91,14 @@ export default function Header() {
           <Image src="/logo.png" alt="網站LOGO" width={40} height={40} />
         </Link>
         <div className="hidden md:flex items-center gap-3">
-          <Button
+          {/* 未修正CSS */}
+          {/* {<Button
             variant="ghost"
             className={customButton({ intent: 'ghost', size: 'sm' })}
             onClick={toggleTheme}
           >
             {theme === 'light' ? '🌞' : '🌙'}
-          </Button>
+          </Button>} */}
           <AnnouncementButton />
         </div>
       </div>
@@ -207,7 +209,8 @@ export default function Header() {
               </VisuallyHidden>
             </SheetHeader>
             <div className="flex flex-col gap-3 mt-4">
-              <Button
+              {/* 未修正CSS */}
+              {/* <Button
                 className={customButton({ intent: 'ghost', size: 'default' })}
                 onClick={() => {
                   toggleTheme();
@@ -215,7 +218,7 @@ export default function Header() {
                 }}
               >
                 {theme === 'light' ? '🌞' : '🌙'}
-              </Button>
+              </Button> */}
 
               <AnnouncementButton onClick={() => setIsMobileMenuOpen(false)} />
 
@@ -232,7 +235,10 @@ export default function Header() {
               ) : (
                 <div className="flex flex-col items-center gap-2">
                   <Button
-                    className={customButton({ intent: 'ghost' })}
+                    className={cn(
+                      customButton({ intent: 'ghost' }),
+                      'text-black dark:text-white'
+                    )}
                     onClick={() => {
                       router.push('/profile');
                       setIsMobileMenuOpen(false);
@@ -249,7 +255,10 @@ export default function Header() {
                     myStories.map((story) => (
                       <Button
                         key={story.id}
-                        className={customButton({ intent: 'ghost' })}
+                        className={cn(
+                          customButton({ intent: 'ghost' }),
+                          'text-black dark:text-white'
+                        )}
                         onClick={() => {
                           router.push(`/story/${story.id}`);
                           setIsMobileMenuOpen(false);
@@ -260,7 +269,10 @@ export default function Header() {
                     ))
                   ) : (
                     <Button
-                      className={customButton({ intent: 'ghost' })}
+                      className={cn(
+                        customButton({ intent: 'ghost' }),
+                        'text-black dark:text-white'
+                      )}
                       onClick={() => {
                         setOpenCreate(true);
                         setIsMobileMenuOpen(false);
