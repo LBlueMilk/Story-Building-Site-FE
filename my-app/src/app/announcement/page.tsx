@@ -34,7 +34,7 @@ export default function AnnouncementPage() {
         </CardHeader>
         <CardContent>
             <div className="flex flex-col items-center space-y-4">
-            <p>這裡可以放置說明 EMAIL 等內容。</p>
+            <p>如果有任何問題，歡迎寄信告訴我喔/ᐠ .ᆺ. ᐟ\ﾉ</p>
             <Button variant="outline" onClick={() => setOpenDialog(true)}>
                 聯絡我們
             </Button>
