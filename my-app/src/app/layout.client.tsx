@@ -17,7 +17,7 @@ export default function RootClient({ children }: { children: React.ReactNode }) 
     // 當版本號變更時，會顯示新的公告
     // 這裡的版本號可以根據實際情況調整
     const CURRENT_ANNOUNCEMENT_VERSION = '1.0.0'; // 當前公告版本號
-    
+
     useEffect(() => {
         const seenVersion = localStorage.getItem('seen_announcement_version');
         if (seenVersion !== CURRENT_ANNOUNCEMENT_VERSION) {
@@ -29,9 +29,12 @@ export default function RootClient({ children }: { children: React.ReactNode }) 
                     </p>
                     <p className="mt-1 text-gray-800">
                         資料庫將在{' '}
-                        <span className="font-bold text-red-600">2025/6/15</span> 失效！
+                        <span className="font-bold text-red-600">2025/6/15</span>{' '}失效！<br />
+                        感謝您的到來與諒解。<br />
                         <br />
-                        感謝您的到來與諒解。
+                        The database will expire on{' '}
+                        <span className="font-bold text-red-600">June 15, 2025</span>.{' '}<br />
+                        Thank you for your visit and understanding.
                     </p>
                 </div>,
                 {

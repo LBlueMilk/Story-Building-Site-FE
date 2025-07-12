@@ -24,7 +24,15 @@ export default function RegisterDialog({ open, setOpen, openLogin }: RegisterDia
     const router = useRouter();
     const { setToken, setUser } = useAuth();
 
-    const handleRegister = async () => {
+    const handleRegister = () => {
+        toast.info(
+            '資料庫已暫停，註冊功能暫時關閉，期待未來再次相遇。\nThe database is currently unavailable. Registration is temporarily disabled. We look forward to meeting you again.',
+            { id: 'register-disabled' }
+        );
+    };
+
+
+    /* const handleRegister = async () => {
         try {
             setLoading(true);
             const response = await register({ email, password, name });
@@ -51,7 +59,7 @@ export default function RegisterDialog({ open, setOpen, openLogin }: RegisterDia
         finally {
             setLoading(false);
         }
-    };
+    }; */
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>

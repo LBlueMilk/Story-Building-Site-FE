@@ -41,7 +41,15 @@ export default function LoginDialog({ open, setOpen, openRegister }: LoginDialog
         }
     }, []);
 
-    const handleLogin = async () => {
+    const handleLogin = () => {
+        toast.info(
+            '資料庫已暫停，登入功能暫時關閉，期待未來再次相遇。\nThe database is currently unavailable. Login is temporarily disabled. We look forward to meeting you again.',
+            { id: 'login-disabled' }
+        );
+    };
+    
+
+    /* const handleLogin = async () => {
         if (!email.trim() || !password.trim()) {
             toast.error('請輸入 Email 與密碼');
             return;
@@ -108,7 +116,7 @@ export default function LoginDialog({ open, setOpen, openRegister }: LoginDialog
         finally {
             setLoading(false);
         }
-    };
+    }; */
 
     return (
         <>
